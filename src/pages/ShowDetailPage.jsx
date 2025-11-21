@@ -88,10 +88,10 @@ const ShowDetailPage = () => {
             data-testid="back-btn"
             onClick={() => navigate('/')}
             variant="ghost"
-            className="absolute top-4 left-4 text-white hover:bg-white/10"
+            className="absolute top-4 left-4 text-white bg-white/10 hover:bg-black/10"
           >
             <ArrowLeft className="mr-2" />
-            Back
+            Backing
           </Button>
 
           <h1 className="text-5xl sm:text-6xl font-bold mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>

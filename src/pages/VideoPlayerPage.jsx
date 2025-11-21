@@ -102,16 +102,16 @@ const VideoPlayerPage = () => {
           data-testid="back-to-show-btn"
           onClick={() => navigate(`/show/${episode.show_id}`)}
           variant="ghost"
-          className="bg-black/80 backdrop-blur-sm text-white hover:bg-black/60"
+          className="bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black"
         >
           <ArrowLeft className="mr-2" />
-          Back
+          Backing
         </Button>
         <Button
           data-testid="toggle-info-btn"
           onClick={() => setShowInfo(!showInfo)}
           variant="ghost"
-          className="bg-black/80 backdrop-blur-sm text-white hover:bg-black/60"
+          className="bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black"
         >
           <Info className="mr-2" />
           Info
