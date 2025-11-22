@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
-import { API, getUserSession } from '../App';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Info } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { API, getUserSession } from "../App";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Info } from "lucide-react";
+import { toast } from "sonner";
+import VideoPlayer from "@/components/VideoPlayer";
 
 const VideoPlayerPage = () => {
   const { episodeId } = useParams();
@@ -30,18 +31,22 @@ const VideoPlayerPage = () => {
       const episodeRes = await axios.get(`${API}/episodes/${episodeId}`);
       setEpisode(episodeRes.data);
 
-      const showRes = await axios.get(`${API}/shows/${episodeRes.data.show_id}`);
+      const showRes = await axios.get(
+        `${API}/shows/${episodeRes.data.show_id}`
+      );
       setShow(showRes.data);
 
       // Load saved progress
       const userSession = getUserSession();
-      const progressRes = await axios.get(`${API}/watch-progress/${userSession}/${episodeId}`);
+      const progressRes = await axios.get(
+        `${API}/watch-progress/${userSession}/${episodeId}`
+      );
       if (progressRes.data.progress > 0 && videoRef.current) {
         videoRef.current.currentTime = progressRes.data.progress;
       }
     } catch (error) {
-      console.error('Error fetching episode:', error);
-      toast.error('Failed to load video');
+      console.error("Error fetching episode:", error);
+      toast.error("Failed to load video");
     } finally {
       setLoading(false);
     }
@@ -74,7 +79,7 @@ const VideoPlayerPage = () => {
         progress: currentTime,
       });
     } catch (error) {
-      console.error('Error saving progress:', error);
+      console.error("Error saving progress:", error);
     }
   };
 
@@ -119,32 +124,19 @@ const VideoPlayerPage = () => {
       </div>
 
       {/* Video Player */}
-      <div className="relative w-full h-screen flex items-center justify-center bg-black">
-        <video
-          ref={videoRef}
-          data-testid="video-player"
-          className="w-full h-full"
-          controls
-          controlsList="nodownload"
-          onPlay={handleVideoPlay}
-          onPause={handleVideoPause}
-          onEnded={handleVideoPause}
-          src={episode.video_url}
-        >
-          <source src={episode.video_url} type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+      <div className="max-w-7xl mx-auto my-8">
+        <VideoPlayer url={episode.video_url} />
       </div>
 
       {/* Episode Info Overlay */}
       {showInfo && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent p-8 z-40">
           <div className="max-w-4xl mx-auto">
-            {show && (
-              <p className="text-gray-400 text-sm mb-2">{show.name}</p>
-            )}
+            {show && <p className="text-gray-400 text-sm mb-2">{show.name}</p>}
             <h2 className="text-3xl font-bold mb-2">{episode.title}</h2>
-            <p className="text-gray-300 mb-4">Episode {episode.episode_number}</p>
+            <p className="text-gray-300 mb-4">
+              Episode {episode.episode_number}
+            </p>
             {episode.description && (
               <p className="text-gray-400">{episode.description}</p>
             )}
