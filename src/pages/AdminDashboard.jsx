@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminDashboard = () => {
@@ -33,6 +33,10 @@ const AdminDashboard = () => {
   const [episodes, setEpisodes] = useState([]);
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
 
   // Modals
   const [showDialog, setShowDialog] = useState(false);
@@ -552,17 +556,38 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  data-testid="login-password"
-                  id="password"
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(e) =>
-                    setLoginForm({ ...loginForm, password: e.target.value })
-                  }
-                  required
-                  className="mt-1"
-                />
+                <div className="relative">
+                  <Input
+                    data-testid="login-password"
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={loginForm.password}
+                    onChange={(e) =>
+                      setLoginForm({ ...loginForm, password: e.target.value })
+                    }
+                    required
+                    className="mt-1 pr-10"
+                  />
+                 <Button
+  type="button"
+  variant="ghost"
+  size="sm"
+  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+  onClick={() => setShowPassword((prev) => !prev)}
+>
+  {showPassword ? (
+    <EyeOff
+      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+      aria-hidden="true"
+    />
+  ) : (
+    <Eye
+      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+      aria-hidden="true"
+    />
+  )}
+</Button>
+                </div>
               </div>
             </div>
 
@@ -738,6 +763,7 @@ const AdminDashboard = () => {
                         className="w-full h-48 object-cover rounded-lg mb-3"
                       />
                     ) : (
+                      // Thumbnail Placeholder
                       <div className="relative w-full h-48 overflow-hidden rounded-lg mb-3">
                         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                           <svg
@@ -895,7 +921,7 @@ const AdminDashboard = () => {
                       {showSeasons.map((season) => (
                         <div
                           key={season.id}
-                          className="flex items-center justify-between bg-[#ea1414] p-3 rounded"
+                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded"
                         >
                           <span>
                             Season {season.season_number}
@@ -1360,52 +1386,96 @@ const AdminDashboard = () => {
       </div>
 
       {/* Change Password Dialog */}
-      <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
-        <DialogContent className="bg-[#1a1a1a] border-gray-800">
-          <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <Label>Current Password</Label>
-              <Input
-                data-testid="current-password-input"
-                type="password"
-                value={passwordForm.current_password}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    current_password: e.target.value,
-                  })
-                }
-                required
+<Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
+  <DialogContent className="bg-[#1a1a1a] border-gray-800">
+    <DialogHeader>
+      <DialogTitle>Change Password</DialogTitle>
+    </DialogHeader>
+    <form onSubmit={handleChangePassword} className="space-y-4">
+      <div>
+        <Label>Current Password</Label>
+        <div className="relative">
+          <Input
+            data-testid="current-password-input"
+            type={showCurrentPassword ? "text" : "password"}
+            value={passwordForm.current_password}
+            onChange={(e) =>
+              setPasswordForm({
+                ...passwordForm,
+                current_password: e.target.value,
+              })
+            }
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+            onClick={() => setShowCurrentPassword((prev) => !prev)}
+          >
+            {showCurrentPassword ? (
+              <EyeOff
+                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                aria-hidden="true"
               />
-            </div>
-            <div>
-              <Label>New Password</Label>
-              <Input
-                data-testid="new-password-input"
-                type="password"
-                value={passwordForm.new_password}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    new_password: e.target.value,
-                  })
-                }
-                required
+            ) : (
+              <Eye
+                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                aria-hidden="true"
               />
-            </div>
-            <Button
-              data-testid="change-password-submit-btn"
-              type="submit"
-              className="w-full bg-[#e50914] hover:bg-[#f40612]"
-            >
-              Change Password
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+            )}
+          </Button>
+        </div>
+      </div>
+      <div>
+        <Label>New Password</Label>
+        <div className="relative">
+          <Input
+            data-testid="new-password-input"
+            type={showNewPassword ? "text" : "password"}
+            value={passwordForm.new_password}
+            onChange={(e) =>
+              setPasswordForm({
+                ...passwordForm,
+                new_password: e.target.value,
+              })
+            }
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+            onClick={() => setShowNewPassword((prev) => !prev)}
+          >
+            {showNewPassword ? (
+              <EyeOff
+                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                aria-hidden="true"
+              />
+            ) : (
+              <Eye
+                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                aria-hidden="true"
+              />
+            )}
+          </Button>
+        </div>
+      </div>
+      <Button
+        data-testid="change-password-submit-btn"
+        type="submit"
+        className="w-full bg-[#e50914] hover:bg-[#f40612]"
+      >
+        Change Password
+      </Button>
+    </form>
+  </DialogContent>
+</Dialog>
     </div>
   );
 };
