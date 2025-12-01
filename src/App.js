@@ -4,6 +4,7 @@ import axios from 'axios';
 import '@/App.css';
 import HomePage from './pages/HomePage';
 import ShowDetailPage from './pages/ShowDetailPage';
+import MovieDetailPage from './pages/MovieDetailPage';
 import VideoPlayerPage from './pages/VideoPlayerPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from '@/components/ui/sonner';
@@ -42,6 +43,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/show/:showId" element={<ShowDetailPage />} />
+          <Route path="/movie/:movieId" element={<MovieDetailPage />} />
           <Route path="/watch/:episodeId" element={<VideoPlayerPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>

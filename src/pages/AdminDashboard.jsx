@@ -264,9 +264,30 @@ const AdminDashboard = () => {
     }
   };
 
-  // Episode Operations
   const handleCreateEpisode = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!episodeForm.show_id) {
+      toast.error("Please select a show before saving the episode.");
+      return;
+    }
+
+    if (!episodeForm.season_id) {
+      toast.error("Please select a season before saving the episode.");
+      return;
+    }
+
+    if (!episodeForm.episode_number) {
+      toast.error("Please enter an episode number.");
+      return;
+    }
+
+    if (!episodeForm.video_url) {
+      toast.error("Please enter a video URL.");
+      return;
+    }
+
     try {
       const episodeData = {
         ...episodeForm,
@@ -325,15 +346,39 @@ const AdminDashboard = () => {
 
   const handleUpdateEpisode = async (e) => {
     e.preventDefault();
+
+    // Validation
+    if (!episodeForm.show_id) {
+      toast.error("Please select a show before updating the episode.");
+      return;
+    }
+
+    if (!episodeForm.season_id) {
+      toast.error("Please select a season before updating the episode.");
+      return;
+    }
+
+    if (!episodeForm.episode_number) {
+      toast.error("Please enter an episode number.");
+      return;
+    }
+
+    if (!episodeForm.video_url) {
+      toast.error("Please enter a video URL.");
+      return;
+    }
+
     try {
       const episodeData = {
         ...episodeForm,
         episode_number: parseInt(episodeForm.episode_number),
         duration: episodeForm.duration ? parseInt(episodeForm.duration) : null,
       };
+
       await axiosInstance.put(`/episodes/${editingEpisode.id}`, episodeData);
       toast.success("Episode updated successfully");
       setEpisodeDialog(false);
+      setEditingEpisode(null);
       setEpisodeForm({
         show_id: "",
         season_id: "",
@@ -344,7 +389,6 @@ const AdminDashboard = () => {
         duration: "",
         thumbnail_url: "",
       });
-      setEditingEpisode(null);
       fetchAllData();
     } catch (error) {
       toast.error("Failed to update episode");
@@ -851,7 +895,7 @@ const AdminDashboard = () => {
                       {showSeasons.map((season) => (
                         <div
                           key={season.id}
-                          className="flex items-center justify-between bg-[#0a0a0a] p-3 rounded"
+                          className="flex items-center justify-between bg-[#ea1414] p-3 rounded"
                         >
                           <span>
                             Season {season.season_number}
@@ -981,7 +1025,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>Episode Title *</Label>
+                      <Label>Episode Title (Optional)</Label>
                       <Input
                         data-testid="episode-title-input"
                         value={episodeForm.title}
@@ -991,7 +1035,7 @@ const AdminDashboard = () => {
                             title: e.target.value,
                           })
                         }
-                        required
+                        //required
                       />
                     </div>
                     <div>
@@ -1025,7 +1069,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>Duration (seconds)</Label>
+                      <Label>Duration (minutes)</Label>
                       <Input
                         data-testid="episode-duration-input"
                         type="number"
@@ -1073,7 +1117,7 @@ const AdminDashboard = () => {
                     className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-400 mb-1">
                           {show?.name} - Season {season?.season_number}
                         </p>
@@ -1148,34 +1192,29 @@ const AdminDashboard = () => {
                     <div>
                       <Label>Select Show</Label>
                       <Select
-  value={movieForm.show_id || "none"}
-  onValueChange={(value) =>
-    setMovieForm({
-      ...movieForm,
-      show_id: value === "none" ? "" : value, // EMPTY STRING, not null
-    })
-  }
->
-  <SelectTrigger data-testid="movie-show-select">
-    <SelectValue />
-  </SelectTrigger>
+                        value={movieForm.show_id || "none"}
+                        onValueChange={(value) =>
+                          setMovieForm({
+                            ...movieForm,
+                            show_id: value === "none" ? "" : value, // EMPTY STRING, not null
+                          })
+                        }
+                      >
+                        <SelectTrigger data-testid="movie-show-select">
+                          <SelectValue />
+                        </SelectTrigger>
 
-  <SelectContent>
-    <SelectItem value="none">Single Movie</SelectItem>
+                        <SelectContent>
+                          <SelectItem value="none">Single Movie</SelectItem>
 
-    {shows.map((show) => (
-      <SelectItem key={show.id} value={show.id}>
-        {show.name}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+                          {shows.map((show) => (
+                            <SelectItem key={show.id} value={show.id}>
+                              {show.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                    </div>
-
-                    {console.log("Rendering movie form for:", movieForm)}
-                    
-                    <div>
                       <Label>Movie Title *</Label>
                       <Input
                         data-testid="movie-title-input"
@@ -1277,7 +1316,7 @@ const AdminDashboard = () => {
                     className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm text-gray-400 mb-1">
                           {show?.name}
                         </p>

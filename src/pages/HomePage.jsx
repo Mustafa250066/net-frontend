@@ -10,12 +10,15 @@ import { toast } from 'sonner';
 const HomePage = () => {
   const navigate = useNavigate();
   const [shows, setShows] = useState([]);
+  const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchShows();
+    fetchMovies();
   }, []);
+
 
   const fetchShows = async () => {
     try {
@@ -28,10 +31,25 @@ const HomePage = () => {
       setLoading(false);
     }
   };
+  const fetchMovies = async () => {
+    try {
+      const response = await axios.get(`${API}/movies`);
+      setMovies(response.data);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      toast.error('Failed to load movies');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const filteredShows = shows.filter(show =>
     show.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const filteredMovies = movies.filter(movie =>
+  (movie.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black">
@@ -70,7 +88,7 @@ const HomePage = () => {
               <Input
                 data-testid="search-input"
                 type="text"
-                placeholder="Search for shows..."
+                placeholder="Search for shows and movies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 py-6 bg-[#1a1a1a] border-gray-700 text-white placeholder-gray-500 focus:border-[#e50914]"
@@ -104,7 +122,7 @@ const HomePage = () => {
                       {show.poster_url ? (
                         <img
                           src={show.poster_url}
-                          alt={show.name}
+                          alt={show.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       ) : (
@@ -125,6 +143,60 @@ const HomePage = () => {
               </div>
             )}
           </div>
+          {console.log(movies)}
+
+{/* Movies Grid */}
+<div className="space-y-8">
+  <h3 className="text-2xl font-semibold mb-6 mt-6">Browse Movies</h3>
+
+  {loading ? (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="skeleton rounded-lg h-64"></div>
+      ))}
+    </div>
+  ) : filteredMovies.length === 0 ? (
+    <div className="text-center py-20">
+      <p className="text-gray-400 text-lg">No movies found</p>
+    </div>
+  ) : (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {filteredMovies.map((movie) => (
+        <div
+          key={movie.id}
+          onClick={() => navigate(`/movie/${movie.id}`)}
+          className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer"
+        >
+          <div className="relative aspect-[2/3] overflow-hidden">
+            {movie.poster_url || movie.thumbnail_url ? (
+              <img
+                src={movie.poster_url || movie.thumbnail_url}
+                alt={movie.title}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                <Play className="w-12 h-12 text-[#e50914]" />
+              </div>
+            )}
+
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+
+          <div className="p-3">
+            <h4 className="font-semibold text-sm truncate">{movie.title}</h4>
+            {movie.description && (
+              <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                {movie.description}
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
         </div>
       </div>
     </div>
