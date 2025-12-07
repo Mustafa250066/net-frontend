@@ -80,7 +80,7 @@ const MovieDetailPage = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
           </>
         )}
-        <div className="absolute inset-0 flex flex-col justify-end p-8 max-w-7xl mx-auto">
+        <div className="absolute inset-0 flex flex-col justify-end p-0 max-w-7xl mx-auto">
           <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
             <ArrowLeft className="mr-2" /> Back
           </Button>
