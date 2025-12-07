@@ -73,7 +73,7 @@ const MovieDetailPage = () => {
         {(movie.poster_url || movie.thumbnail_url) && (
           <>
             <img
-              src={movie.poster_url || movie.thumbnail_url}
+              src={movie.thumbnail_url || movie.poster_url}
               alt={movie.title}
               className="w-full h-full object-cover"
             />
