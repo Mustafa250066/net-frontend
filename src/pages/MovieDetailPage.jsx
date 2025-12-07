@@ -81,7 +81,7 @@ const MovieDetailPage = () => {
           </>
         )}
         <div className="absolute inset-0 flex flex-col justify-end p-8 max-w-7xl mx-auto">
-          <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 text-white bg-white/10 hover:bg-black/10">
+          <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
             <ArrowLeft className="mr-2" /> Back
           </Button>
           <h1 className="text-5xl sm:text-6xl font-bold mb-4" style={{ fontFamily: "Space Grotesk, sans-serif" }}>

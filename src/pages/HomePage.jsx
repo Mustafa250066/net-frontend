@@ -57,7 +57,7 @@ const HomePage = () => {
       <header className="fixed top-0 w-full z-50 bg-gradient-to-b from-black to-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-[#e50914]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            StreamFlix
+            FlixPort
           </h1>
           <Button
             data-testid="admin-login-btn"

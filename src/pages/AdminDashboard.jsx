@@ -650,7 +650,7 @@ const AdminDashboard = () => {
               data-testid="logout-btn"
               onClick={handleLogout}
               variant="outline"
-              className="border-gray-700 text-red-500 hover:text-red-400"
+              className="border-red-500 text-red-500 hover:text-white hover:bg-red-500"
             >
               <LogOut className="mr-2 h-4 w-4" />
               Logout
@@ -663,10 +663,10 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="shows" className="w-full">
           <TabsList className="bg-[#1a1a1a] border border-gray-800">
-            <TabsTrigger value="shows">Shows</TabsTrigger>
-            <TabsTrigger value="seasons">Seasons</TabsTrigger>
-            <TabsTrigger value="episodes">Episodes</TabsTrigger>
-            <TabsTrigger value="movies">Movies</TabsTrigger>
+            <TabsTrigger value="shows" className="hover:bg-[#3d3d3d]">Shows</TabsTrigger>
+            <TabsTrigger value="seasons" className="hover:bg-[#3d3d3d]">Seasons</TabsTrigger>
+            <TabsTrigger value="episodes" className="hover:bg-[#3d3d3d]">Episodes</TabsTrigger>
+            <TabsTrigger value="movies" className="hover:bg-[#3d3d3d]">Movies</TabsTrigger>
           </TabsList>
 
           {/* Shows Tab */}

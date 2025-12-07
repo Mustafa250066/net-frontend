@@ -94,7 +94,7 @@ const ShowDetailPage = () => {
             data-testid="back-btn"
             onClick={() => navigate("/")}
             variant="ghost"
-            className="absolute top-4 left-4 text-white bg-white/10 hover:bg-black/10"
+            className="bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black absolute top-4 left-4"
           >
             <ArrowLeft className="mr-2" />
             Back
