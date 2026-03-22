@@ -23,6 +23,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import convertToDirectUrl from '../lib/convert';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -758,7 +759,7 @@ const AdminDashboard = () => {
                   >
                     {hasPoster ? (
                       <img
-                        src={show.poster_url}
+                        src={convertToDirectUrl(show.poster_url)}
                         alt={show.name}
                         className="w-full h-48 object-cover rounded-lg mb-3"
                       />
