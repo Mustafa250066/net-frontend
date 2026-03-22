@@ -130,10 +130,10 @@ const HomePage = () => {
       <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-5xl sm:text-6xl font-bold mb-4" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              Unlimited entertainment
+            <h2 className="text-5xl sm:text-6xl font-bold mb-4 text-[#e50914]" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              Unlimited Entertainment
             </h2>
-            <p className="text-lg text-gray-400">Watch anywhere. No login required.</p>
+            <p className="text-lg text-gray-400">A world of movies and shows. Just a click away.</p>
           </div>
 
           {/* Search Bar */}
