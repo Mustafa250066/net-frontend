@@ -7,6 +7,61 @@ import { Input } from '@/components/ui/input';
 import { Play, Search, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
+const convertToDirectUrl = (url) => {
+  if (!url) return url;
+  const trimmed = url.trim();
+
+  // Google Drive
+  let driveId = '';
+  const driveMatch = trimmed.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const driveIdMatch = trimmed.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+
+  if (driveMatch) {
+    driveId = driveMatch[1];
+  } else if (driveIdMatch) {
+    driveId = driveIdMatch[1];
+  }
+
+  if (driveId && (trimmed.includes("drive.google.com") || trimmed.includes("docs.google.com"))) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
+  }
+
+  // Dropbox
+  if (trimmed.includes("dropbox.com")) {
+    return trimmed.replace("dl=0", "dl=1").replace("www.dropbox.com", "dl.dropboxusercontent.com");
+  }
+
+  // OneDrive / SharePoint embed link
+  if (trimmed.includes("1drv.ms") || trimmed.includes("onedrive.live.com") || trimmed.includes("sharepoint.com")) {
+    // Convert share link to direct download
+    if (trimmed.includes("onedrive.live.com")) {
+      return trimmed.replace("/redir?", "/download?").replace("resid=", "resid=");
+    }
+    // For 1drv.ms short links, try appending download param
+    return trimmed.includes("?") ? `${trimmed}&download=1` : `${trimmed}?download=1`;
+  }
+
+  // Imgur: convert page URL to direct image
+  // e.g. https://imgur.com/abc123 → https://i.imgur.com/abc123.jpg
+  const imgurMatch = trimmed.match(/imgur\.com\/(?:a\/)?([a-zA-Z0-9]+)$/);
+  if (imgurMatch && !trimmed.includes("i.imgur.com")) {
+    return `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+  }
+
+  // Postimg.cc
+  const postimgMatch = trimmed.match(/postimg\.cc\/([a-zA-Z0-9]+)/);
+  if (postimgMatch) {
+    return `https://i.postimg.cc/${postimgMatch[1]}/image.jpg`;
+  }
+
+  // ImgBB viewer → direct
+  if (trimmed.includes("ibb.co/") && !trimmed.includes("i.ibb.co")) {
+    return trimmed.replace("ibb.co/", "i.ibb.co/") + "/image.jpg";
+  }
+
+  return trimmed;
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const [shows, setShows] = useState([]);
@@ -48,8 +103,8 @@ const HomePage = () => {
     show.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const filteredMovies = movies.filter(movie =>
-  (movie.title || "").toLowerCase().includes(searchQuery.toLowerCase())
-);
+    (movie.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black">
@@ -121,7 +176,7 @@ const HomePage = () => {
                     <div className="relative aspect-[2/3] overflow-hidden">
                       {show.poster_url ? (
                         <img
-                          src={show.poster_url}
+                          src={convertToDirectUrl(show.poster_url)}
                           alt={show.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
@@ -145,57 +200,57 @@ const HomePage = () => {
           </div>
           {console.log(movies)}
 
-{/* Movies Grid */}
-<div className="space-y-8">
-  <h3 className="text-2xl font-semibold mb-6 mt-6">Browse Movies</h3>
+          {/* Movies Grid */}
+          <div className="space-y-8">
+            <h3 className="text-2xl font-semibold mb-6 mt-6">Browse Movies</h3>
 
-  {loading ? (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {[...Array(10)].map((_, i) => (
-        <div key={i} className="skeleton rounded-lg h-64"></div>
-      ))}
-    </div>
-  ) : filteredMovies.length === 0 ? (
-    <div className="text-center py-20">
-      <p className="text-gray-400 text-lg">No movies found</p>
-    </div>
-  ) : (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      {filteredMovies.map((movie) => (
-        <div
-          key={movie.id}
-          onClick={() => navigate(`/movie/${movie.id}`)}
-          className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer"
-        >
-          <div className="relative aspect-[2/3] overflow-hidden">
-            {movie.poster_url || movie.thumbnail_url ? (
-              <img
-                src={movie.poster_url || movie.thumbnail_url}
-                alt={movie.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-              />
+            {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="skeleton rounded-lg h-64"></div>
+                ))}
+              </div>
+            ) : filteredMovies.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-gray-400 text-lg">No movies found</p>
+              </div>
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                <Play className="w-12 h-12 text-[#e50914]" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {filteredMovies.map((movie) => (
+                  <div
+                    key={movie.id}
+                    onClick={() => navigate(`/movie/${movie.id}`)}
+                    className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer"
+                  >
+                    <div className="relative aspect-[2/3] overflow-hidden">
+                      {movie.poster_url || movie.thumbnail_url ? (
+                        <img
+                          src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
+                          alt={movie.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                          <Play className="w-12 h-12 text-[#e50914]" />
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+
+                    <div className="p-3">
+                      <h4 className="font-semibold text-sm truncate">{movie.title}</h4>
+                      {movie.description && (
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-2">
+                          {movie.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
-
-          <div className="p-3">
-            <h4 className="font-semibold text-sm truncate">{movie.title}</h4>
-            {movie.description && (
-              <p className="text-xs text-gray-400 mt-1 line-clamp-2">
-                {movie.description}
-              </p>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
 
         </div>
       </div>
