@@ -22,7 +22,7 @@ const convertToDirectUrl = (url) => {
     driveId = driveIdMatch[1];
   }
 
-  if (driveId && (trimmed.includes("drive.google.com") || trimmed.includes("docs.google.com"))) {
+  if (driveId && (trimmed.includes("drive.google.com") || trimmed.includes("docs.google.com") || trimmed.includes("googleusercontent.com"))) {
     return `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
   }
 
