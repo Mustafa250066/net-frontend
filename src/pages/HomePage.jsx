@@ -131,10 +131,10 @@ const HomePage = () => {
           {/* Hero Section */}
           <div className="text-center mb-6 sm:mb-12">
             <h2 
-              className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 text-[#e50914] px-1 break-words"
+              className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 px-1 break-words"
               style={{ fontFamily: 'Space Grotesk, sans-serif' }}
             >
-              Unlimited<br className="hidden xs:hidden sm:hidden" /> 
+              Unlimited <br className="hidden xs:hidden sm:hidden" /> 
               Entertainment
             </h2>
             <p className="text-xs xs:text-sm sm:text-base md:text-lg text-gray-400 px-2 break-words">
@@ -178,36 +178,40 @@ const HomePage = () => {
             ) : (
               <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
                 {filteredShows.map((show) => (
+                  /* Animated Wrapper */
                   <div
                     key={show.id}
                     data-testid={`show-card-${show.id}`}
                     onClick={() => navigate(`/show/${show.id}`)}
-                    className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer transition-transform hover:scale-105 duration-200"
+                    className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
                   >
-                    <div className="relative aspect-[2/3] overflow-hidden">
-                      {show.poster_url ? (
-                        <img
-                          src={convertToDirectUrl(show.poster_url)}
-                          alt={show.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                          <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                    <div className="p-1.5 xs:p-2 sm:p-3">
-                      <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={show.name}>
-                        {show.name}
-                      </h4>
-                      {show.description && (
-                        <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
-                          {show.description}
-                        </p>
-                      )}
+                    {/* Inner Card Content */}
+                    <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
+                      <div className="relative aspect-[2/3] overflow-hidden">
+                        {show.poster_url ? (
+                          <img
+                            src={convertToDirectUrl(show.poster_url)}
+                            alt={show.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                      <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
+                        <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={show.name}>
+                          {show.name}
+                        </h4>
+                        {show.description && (
+                          <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                            {show.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -236,35 +240,39 @@ const HomePage = () => {
             ) : (
               <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
                 {filteredMovies.map((movie) => (
+                  /* Animated Wrapper */
                   <div
                     key={movie.id}
                     onClick={() => navigate(`/movie/${movie.id}`)}
-                    className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer transition-transform hover:scale-105 duration-200"
+                    className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
                   >
-                    <div className="relative aspect-[2/3] overflow-hidden">
-                      {movie.poster_url || movie.thumbnail_url ? (
-                        <img
-                          src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
-                          alt={movie.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                          <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-                    <div className="p-1.5 xs:p-2 sm:p-3">
-                      <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={movie.title}>
-                        {movie.title}
-                      </h4>
-                      {movie.description && (
-                        <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
-                          {movie.description}
-                        </p>
-                      )}
+                    {/* Inner Card Content */}
+                    <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
+                      <div className="relative aspect-[2/3] overflow-hidden">
+                        {movie.poster_url || movie.thumbnail_url ? (
+                          <img
+                            src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
+                            alt={movie.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                            <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                      <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
+                        <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={movie.title}>
+                          {movie.title}
+                        </h4>
+                        {movie.description && (
+                          <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                            {movie.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -274,18 +282,68 @@ const HomePage = () => {
         </div>
       </main>
 
-      {/* Footer - Removed extra top margin, added minimal padding */}
+      {/* Footer */}
       <footer className="border-t border-gray-800 bg-gradient-to-t from-black to-transparent">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="text-center text-gray-500 text-[10px] xs:text-xs sm:text-sm">
             <p>© 2026 FlixPort. All rights reserved.</p>
-            <p className="mt-1">Unlimited entertainment at your fingertips</p>
           </div>
         </div>
       </footer>
 
-      {/* Custom CSS for extra small screens */}
+      {/* Custom CSS */}
       <style jsx>{`
+        /* The New Animated Border CSS */
+        .animated-border-wrapper {
+          position: relative;
+          overflow: hidden;
+          border-radius: 0.5rem; /* Matches Tailwind's rounded-lg */
+          padding: 2px; /* This controls the thickness of the glowing border */
+        }
+        
+        .animated-border-wrapper::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 250%; /* Large enough to cover corners dynamically */
+          height: 250%;
+          background: conic-gradient(
+            transparent 0deg, 
+            #e50914 45deg,    /* Red */
+            transparent 45deg, 
+            transparent 90deg, 
+            #ff3333 135deg,   /* Blue */
+            transparent 135deg, 
+            transparent 180deg, 
+            #8b0000 225deg,   /* Green */
+            transparent 225deg, 
+            transparent 270deg, 
+            #000000 315deg,   /* Yellow */
+            transparent 315deg
+          );
+          /* Translate centers the oversized gradient before spinning it */
+          animation: border-spin 4s linear infinite;
+          z-index: 0;
+        }
+        
+        .animated-border-content {
+          position: relative;
+          z-index: 1;
+          border-radius: 0.4rem; /* Slightly smaller than outer border */
+          overflow: hidden;
+        }
+
+        @keyframes border-spin {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+
+        /* Existing CSS */
         @keyframes pulse {
           0%, 100% {
             opacity: 1;
@@ -298,30 +356,19 @@ const HomePage = () => {
           animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         
-        /* Custom breakpoint for extra small screens */
         @media (min-width: 480px) {
-          .xs\\:text-2xl {
-            font-size: 1.5rem;
-          }
-          .xs\\:text-3xl {
-            font-size: 1.875rem;
-          }
-          .xs\\:text-sm {
-            font-size: 0.875rem;
-          }
-          .xs\\:text-base {
-            font-size: 1rem;
-          }
+          .xs\\:text-2xl { font-size: 1.5rem; }
+          .xs\\:text-3xl { font-size: 1.875rem; }
+          .xs\\:text-sm { font-size: 0.875rem; }
+          .xs\\:text-base { font-size: 1rem; }
         }
         
-        /* Ensure text breaks properly on very small screens */
         .break-words {
           word-wrap: break-word;
           word-break: break-word;
           hyphens: auto;
         }
         
-        /* Prevent overflow on very small screens */
         .overflow-x-hidden {
           overflow-x: hidden;
         }
