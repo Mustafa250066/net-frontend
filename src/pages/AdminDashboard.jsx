@@ -521,6 +521,13 @@ const AdminDashboard = () => {
     return seasons.filter((s) => s.show_id === showId);
   };
 
+  // Helper function to truncate text
+  const truncateText = (text, maxLength = 50) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
   // Login Screen
   if (!isAuthenticated) {
     return (
@@ -755,7 +762,7 @@ const AdminDashboard = () => {
                 return (
                   <div
                     key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
                   >
                     {hasPoster ? (
                       <img
@@ -787,9 +794,11 @@ const AdminDashboard = () => {
                       </div>
                     )}
 
-                    <h3 className="text-lg font-semibold mb-2 line-clamp-1">{show.name}</h3>
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
+                      {show.name}
+                    </h3>
                     {show.description && (
-                      <p className="text-sm text-gray-400 mb-3 line-clamp-2">
+                      <p className="text-sm text-gray-400 mb-3 line-clamp-2 break-words">
                         {show.description}
                       </p>
                     )}
@@ -859,13 +868,13 @@ const AdminDashboard = () => {
                         }
                         required
                       >
-                        <SelectTrigger data-testid="season-show-select">
+                        <SelectTrigger data-testid="season-show-select" className="w-full">
                           <SelectValue placeholder="Select a show" />
                         </SelectTrigger>
                         <SelectContent>
                           {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id}>
-                              {show.name}
+                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                              {truncateText(show.name, 40)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -915,20 +924,22 @@ const AdminDashboard = () => {
                 return (
                   <div
                     key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
                   >
-                    <h3 className="text-xl font-semibold mb-4 line-clamp-1">{show.name}</h3>
+                    <h3 className="text-xl font-semibold mb-4 line-clamp-1" title={show.name}>
+                      {show.name}
+                    </h3>
                     <div className="space-y-2">
                       {showSeasons.map((season) => (
                         <div
                           key={season.id}
-                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded line-clamp-2"
+                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded overflow-hidden"
                         >
-                          <span>
+                          <span className="truncate flex-1 mr-2" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
                             Season {season.season_number}
-                            {season.name && ` - ${season.name}`}
+                            {season.name && ` - ${truncateText(season.name, 30)}`}
                           </span>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-shrink-0">
                             <Button
                               data-testid={`edit-season-${season.id}`}
                               onClick={() => handleEditSeason(season)}
@@ -999,13 +1010,13 @@ const AdminDashboard = () => {
                         }
                         required
                       >
-                        <SelectTrigger data-testid="episode-show-select">
+                        <SelectTrigger data-testid="episode-show-select" className="w-full">
                           <SelectValue placeholder="Select a show" />
                         </SelectTrigger>
                         <SelectContent>
                           {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id}>
-                              {show.name}
+                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                              {truncateText(show.name, 40)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1021,15 +1032,15 @@ const AdminDashboard = () => {
                         required
                         disabled={!episodeForm.show_id}
                       >
-                        <SelectTrigger data-testid="episode-season-select">
+                        <SelectTrigger data-testid="episode-season-select" className="w-full">
                           <SelectValue placeholder="Select a season" />
                         </SelectTrigger>
                         <SelectContent>
                           {getSeasonsByShow(episodeForm.show_id).map(
                             (season) => (
-                              <SelectItem key={season.id} value={season.id}>
+                              <SelectItem key={season.id} value={season.id} className="truncate" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
                                 Season {season.season_number}
-                                {season.name && ` - ${season.name}`}
+                                {season.name && ` - ${truncateText(season.name, 30)}`}
                               </SelectItem>
                             )
                           )}
@@ -1062,7 +1073,6 @@ const AdminDashboard = () => {
                             title: e.target.value,
                           })
                         }
-                        //required
                       />
                     </div>
                     <div>
@@ -1141,26 +1151,26 @@ const AdminDashboard = () => {
                 return (
                   <div
                     key={episode.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 mb-1">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <p className="text-sm text-gray-400 mb-1 line-clamp-1" title={`${show?.name} - Season ${season?.season_number}`}>
                           {show?.name} - Season {season?.season_number}
                         </p>
-                        <h3 className="text-lg font-semibold mb-2">
-                          Episode {episode.episode_number}: {episode.title}
+                        <h3 className="text-lg font-semibold mb-2 break-words line-clamp-1" title={`Episode ${episode.episode_number}: ${episode.title}`}>
+                          Episode {episode.episode_number}: {truncateText(episode.title, 50)}
                         </h3>
                         {episode.description && (
-                          <p className="text-sm text-gray-400 mb-2">
+                          <p className="text-sm text-gray-400 mb-2 break-words line-clamp-2">
                             {episode.description}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate">
-                          URL: {episode.video_url}
+                        <p className="text-sm text-gray-500 truncate" title={episode.video_url}>
+                          URL: {truncateText(episode.video_url, 60)}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button
                           data-testid={`edit-episode-${episode.id}`}
                           onClick={() => handleEditEpisode(episode)}
@@ -1223,11 +1233,11 @@ const AdminDashboard = () => {
                         onValueChange={(value) =>
                           setMovieForm({
                             ...movieForm,
-                            show_id: value === "none" ? "" : value, // EMPTY STRING, not null
+                            show_id: value === "none" ? "" : value,
                           })
                         }
                       >
-                        <SelectTrigger data-testid="movie-show-select">
+                        <SelectTrigger data-testid="movie-show-select" className="w-full">
                           <SelectValue />
                         </SelectTrigger>
 
@@ -1235,8 +1245,8 @@ const AdminDashboard = () => {
                           <SelectItem value="none">Single Movie</SelectItem>
 
                           {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id}>
-                              {show.name}
+                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                              {truncateText(show.name, 40)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1340,26 +1350,26 @@ const AdminDashboard = () => {
                 return (
                   <div
                     key={movie.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
                   >
                     <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 mb-1 line-clamp-1">
+                      <div className="flex-1 min-w-0 mr-4">
+                        <p className="text-sm text-gray-400 mb-1 truncate" title={show?.name}>
                           {show?.name}
                         </p>
-                        <h3 className="text-lg font-semibold mb-2 line-clamp-1">
-                          {movie.title}
+                        <h3 className="text-lg font-semibold mb-2 break-words" title={movie.title}>
+                          {truncateText(movie.title, 60)}
                         </h3>
                         {movie.description && (
-                          <p className="text-sm text-gray-400 mb-2 line-clamp-1">
+                          <p className="text-sm text-gray-400 mb-2 break-words line-clamp-2">
                             {movie.description}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate line-clamp-1">
-                          URL: {movie.video_url}
+                        <p className="text-sm text-gray-500 truncate" title={movie.video_url}>
+                          URL: {truncateText(movie.video_url, 60)}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-shrink-0">
                         <Button
                           data-testid={`edit-movie-${movie.id}`}
                           onClick={() => handleEditMovie(movie)}
