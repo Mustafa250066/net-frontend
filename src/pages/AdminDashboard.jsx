@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
 
@@ -37,7 +37,7 @@ const AdminDashboard = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Modals
   const [showDialog, setShowDialog] = useState(false);
@@ -128,6 +128,7 @@ const AdminDashboard = () => {
     localStorage.removeItem("adminToken");
     setIsAuthenticated(false);
     navigate("/");
+    setMobileMenuOpen(false);
   };
 
   const fetchAllData = async () => {
@@ -535,17 +536,17 @@ const AdminDashboard = () => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1
-              className="text-4xl font-bold text-[#e50914] mb-2"
+              className="text-3xl sm:text-4xl font-bold text-[#e50914] mb-2"
               style={{ fontFamily: "Space Grotesk, sans-serif" }}
             >
               Admin Login
             </h1>
-            <p className="text-gray-400">Enter your credentials to continue</p>
+            <p className="text-gray-400 text-sm sm:text-base">Enter your credentials to continue</p>
           </div>
 
           <form
             onSubmit={handleLogin}
-            className="bg-[#1a1a1a] p-8 rounded-lg border border-gray-800"
+            className="bg-[#1a1a1a] p-6 sm:p-8 rounded-lg border border-gray-800"
           >
             <div className="space-y-4">
               <div>
@@ -577,24 +578,24 @@ const AdminDashboard = () => {
                     className="mt-1 pr-10"
                   />
                  <Button
-  type="button"
-  variant="ghost"
-  size="sm"
-  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-  onClick={() => setShowPassword((prev) => !prev)}
->
-  {showPassword ? (
-    <EyeOff
-      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-      aria-hidden="true"
-    />
-  ) : (
-    <Eye
-      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-      aria-hidden="true"
-    />
-  )}
-</Button>
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                >
+                  {showPassword ? (
+                    <EyeOff
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Eye
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Button>
                 </div>
               </div>
             </div>
@@ -627,60 +628,134 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-[#1a1a1a] border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <h1
-            className="text-2xl font-bold text-[#e50914]"
-            style={{ fontFamily: "Space Grotesk, sans-serif" }}
-          >
-            Admin Dashboard
-          </h1>
-          <div className="flex gap-2">
-            <Button
-              data-testid="home-btn"
-              onClick={() => navigate("/")}
-              variant="outline"
-              className="border-gray-700"
+      <header className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex items-center justify-between">
+            <h1
+              className="text-lg sm:text-xl md:text-2xl font-bold text-[#e50914] truncate"
+              style={{ fontFamily: "Space Grotesk, sans-serif" }}
             >
-              <Home className="mr-2 h-4 w-4" />
-              Home
-            </Button>
+              Admin Dashboard
+            </h1>
+            
+            {/* Desktop Menu */}
+            <div className="hidden md:flex gap-2">
+              <Button
+                data-testid="home-btn"
+                onClick={() => navigate("/")}
+                variant="outline"
+                className="border-gray-700"
+                size="sm"
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Home
+              </Button>
+              <Button
+                data-testid="change-password-btn"
+                onClick={() => setPasswordDialog(true)}
+                variant="outline"
+                className="border-gray-700"
+                size="sm"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Change Password
+              </Button>
+              <Button
+                data-testid="logout-btn"
+                onClick={handleLogout}
+                variant="outline"
+                className="border-red-500 text-red-500 hover:text-white hover:bg-red-500"
+                size="sm"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+
+            {/* Mobile Menu Button */}
             <Button
-              data-testid="change-password-btn"
-              onClick={() => setPasswordDialog(true)}
-              variant="outline"
-              className="border-gray-700"
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              <Key className="mr-2 h-4 w-4" />
-              Change Password
-            </Button>
-            <Button
-              data-testid="logout-btn"
-              onClick={handleLogout}
-              variant="outline"
-              className="border-red-500 text-red-500 hover:text-white hover:bg-red-500"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5 text-gray-400" />
+              ) : (
+                <Menu className="h-5 w-5 text-gray-400" />
+              )}
             </Button>
           </div>
+
+          {/* Mobile Dropdown Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-3 pt-3 border-t border-gray-800 space-y-2 animate-in slide-in-from-top-2 duration-200">
+              <Button
+                data-testid="home-btn-mobile"
+                onClick={() => {
+                  navigate("/");
+                  setMobileMenuOpen(false);
+                }}
+                variant="outline"
+                className="w-full justify-start border-gray-700"
+                size="sm"
+              >
+                <Home className="mr-2 h-4 w-4" />
+                Home
+              </Button>
+              <Button
+                data-testid="change-password-btn-mobile"
+                onClick={() => {
+                  setPasswordDialog(true);
+                  setMobileMenuOpen(false);
+                }}
+                variant="outline"
+                className="w-full justify-start border-gray-700"
+                size="sm"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Change Password
+              </Button>
+              <Button
+                data-testid="logout-btn-mobile"
+                onClick={handleLogout}
+                variant="outline"
+                className="w-full justify-start border-red-500 text-red-500 hover:text-white hover:bg-red-500"
+                size="sm"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         <Tabs defaultValue="shows" className="w-full">
-          <TabsList className="bg-[#1a1a1a] border border-gray-800">
-            <TabsTrigger value="shows" className="hover:bg-[#3d3d3d]">Shows</TabsTrigger>
-            <TabsTrigger value="seasons" className="hover:bg-[#3d3d3d]">Seasons</TabsTrigger>
-            <TabsTrigger value="episodes" className="hover:bg-[#3d3d3d]">Episodes</TabsTrigger>
-            <TabsTrigger value="movies" className="hover:bg-[#3d3d3d]">Movies</TabsTrigger>
-          </TabsList>
+          {/* Responsive Tabs List */}
+          <div className="overflow-x-auto pb-2 -mx-3 sm:mx-0 px-3 sm:px-0">
+            <TabsList className="bg-[#1a1a1a] border border-gray-800 w-full sm:w-auto min-w-max">
+              <TabsTrigger value="shows" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+                Shows
+              </TabsTrigger>
+              <TabsTrigger value="seasons" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+                Seasons
+              </TabsTrigger>
+              <TabsTrigger value="episodes" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+                Episodes
+              </TabsTrigger>
+              <TabsTrigger value="movies" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+                Movies
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Shows Tab */}
-          <TabsContent value="shows" className="mt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Manage Shows</h2>
+          <TabsContent value="shows" className="mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">Manage Shows</h2>
               <Dialog
                 open={showDialog}
                 onOpenChange={(open) => {
@@ -691,14 +766,14 @@ const AdminDashboard = () => {
                 <DialogTrigger asChild>
                   <Button
                     data-testid="add-show-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612]"
+                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
                   >
-                    <Plus className="mr-2" /> Add Show
+                    <Plus className="mr-2 h-4 w-4" /> Add Show
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800">
+                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl">
                       {editingShow ? "Edit Show" : "Add New Show"}
                     </DialogTitle>
                   </DialogHeader>
@@ -728,6 +803,7 @@ const AdminDashboard = () => {
                             description: e.target.value,
                           })
                         }
+                        rows={3}
                       />
                     </div>
                     <div>
@@ -755,24 +831,24 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Responsive Show Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {shows.map((show) => {
                 const hasPoster =
                   show.poster_url && show.poster_url.trim() !== "";
                 return (
                   <div
                     key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden hover:border-gray-700 transition-colors"
                   >
                     {hasPoster ? (
                       <img
                         src={convertToDirectUrl(show.poster_url)}
                         alt={show.name}
-                        className="w-full h-48 object-cover rounded-lg mb-3"
+                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
                       />
                     ) : (
-                      // Thumbnail Placeholder
-                      <div className="relative w-full h-48 overflow-hidden rounded-lg mb-3">
+                      <div className="relative w-full h-40 sm:h-48 overflow-hidden rounded-lg mb-3">
                         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -784,21 +860,20 @@ const AdminDashboard = () => {
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="lucide lucide-play w-12 h-12 text-[#e50914]"
+                            className="lucide lucide-play w-10 h-10 sm:w-12 sm:h-12 text-[#e50914]"
                             aria-hidden="true"
                           >
                             <polygon points="6 3 20 12 6 21 6 3"></polygon>
                           </svg>
                         </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
                     )}
 
-                    <h3 className="text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
+                    <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
                       {show.name}
                     </h3>
                     {show.description && (
-                      <p className="text-sm text-gray-400 mb-3 line-clamp-2 break-words">
+                      <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2 break-words">
                         {show.description}
                       </p>
                     )}
@@ -808,30 +883,35 @@ const AdminDashboard = () => {
                         onClick={() => handleEditShow(show)}
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 text-xs sm:text-sm"
                       >
-                        <Edit className="mr-2 h-4 w-4" /> Edit
+                        <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Edit
                       </Button>
                       <Button
                         data-testid={`delete-show-${show.id}`}
                         onClick={() => handleDeleteShow(show.id)}
                         variant="destructive"
                         size="sm"
-                        className="flex-1"
+                        className="flex-1 text-xs sm:text-sm"
                       >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Delete
                       </Button>
                     </div>
                   </div>
                 );
               })}
             </div>
+            {shows.length === 0 && (
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-400">No shows found. Click "Add Show" to create one.</p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Seasons Tab */}
-          <TabsContent value="seasons" className="mt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Manage Seasons</h2>
+          <TabsContent value="seasons" className="mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
               <Dialog
                 open={seasonDialog}
                 onOpenChange={(open) => {
@@ -842,14 +922,14 @@ const AdminDashboard = () => {
                 <DialogTrigger asChild>
                   <Button
                     data-testid="add-season-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612]"
+                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
                   >
-                    <Plus className="mr-2" /> Add Season
+                    <Plus className="mr-2 h-4 w-4" /> Add Season
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800">
+                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl">
                       {editingSeason ? "Edit Season" : "Add New Season"}
                     </DialogTitle>
                   </DialogHeader>
@@ -917,44 +997,46 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {shows.map((show) => {
                 const showSeasons = getSeasonsByShow(show.id);
                 if (showSeasons.length === 0) return null;
                 return (
                   <div
                     key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
                   >
-                    <h3 className="text-xl font-semibold mb-4 line-clamp-1" title={show.name}>
+                    <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
                       {show.name}
                     </h3>
                     <div className="space-y-2">
                       {showSeasons.map((season) => (
                         <div
                           key={season.id}
-                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded overflow-hidden"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
                         >
-                          <span className="truncate flex-1 mr-2" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                          <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
                             Season {season.season_number}
                             {season.name && ` - ${truncateText(season.name, 30)}`}
                           </span>
-                          <div className="flex gap-2 flex-shrink-0">
+                          <div className="flex gap-2 flex-shrink-0 justify-end">
                             <Button
                               data-testid={`edit-season-${season.id}`}
                               onClick={() => handleEditSeason(season)}
                               variant="outline"
                               size="sm"
+                              className="h-8 sm:h-9"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               data-testid={`delete-season-${season.id}`}
                               onClick={() => handleDeleteSeason(season.id)}
                               variant="destructive"
                               size="sm"
+                              className="h-8 sm:h-9"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
@@ -967,9 +1049,9 @@ const AdminDashboard = () => {
           </TabsContent>
 
           {/* Episodes Tab */}
-          <TabsContent value="episodes" className="mt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Manage Episodes</h2>
+          <TabsContent value="episodes" className="mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">Manage Episodes</h2>
               <Dialog
                 open={episodeDialog}
                 onOpenChange={(open) => {
@@ -980,14 +1062,14 @@ const AdminDashboard = () => {
                 <DialogTrigger asChild>
                   <Button
                     data-testid="add-episode-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612]"
+                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
                   >
-                    <Plus className="mr-2" /> Add Episode
+                    <Plus className="mr-2 h-4 w-4" /> Add Episode
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl">
                       {editingEpisode ? "Edit Episode" : "Add New Episode"}
                     </DialogTitle>
                   </DialogHeader>
@@ -1076,9 +1158,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>
-                        Video URL * (Google Drive, YouTube, or any video URL)
-                      </Label>
+                      <Label>Video URL *</Label>
                       <Input
                         data-testid="episode-video-url-input"
                         value={episodeForm.video_url}
@@ -1103,6 +1183,7 @@ const AdminDashboard = () => {
                             description: e.target.value,
                           })
                         }
+                        rows={3}
                       />
                     </div>
                     <div>
@@ -1144,29 +1225,29 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {episodes.map((episode) => {
                 const show = shows.find((s) => s.id === episode.show_id);
                 const season = seasons.find((s) => s.id === episode.season_id);
                 return (
                   <div
                     key={episode.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0 mr-4">
-                        <p className="text-sm text-gray-400 mb-1 line-clamp-1" title={`${show?.name} - Season ${season?.season_number}`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0 w-full">
+                        <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={`${show?.name} - Season ${season?.season_number}`}>
                           {show?.name} - Season {season?.season_number}
                         </p>
-                        <h3 className="text-lg font-semibold mb-2 break-words line-clamp-1" title={`Episode ${episode.episode_number}: ${episode.title}`}>
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
                           Episode {episode.episode_number}: {truncateText(episode.title, 50)}
                         </h3>
                         {episode.description && (
-                          <p className="text-sm text-gray-400 mb-2 break-words line-clamp-2">
+                          <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
                             {episode.description}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate" title={episode.video_url}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate" title={episode.video_url}>
                           URL: {truncateText(episode.video_url, 60)}
                         </p>
                       </div>
@@ -1176,29 +1257,36 @@ const AdminDashboard = () => {
                           onClick={() => handleEditEpisode(episode)}
                           variant="outline"
                           size="sm"
+                          className="h-8 sm:h-9"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           data-testid={`delete-episode-${episode.id}`}
                           onClick={() => handleDeleteEpisode(episode.id)}
                           variant="destructive"
                           size="sm"
+                          className="h-8 sm:h-9"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
                 );
               })}
+              {episodes.length === 0 && (
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-gray-400">No episodes found. Click "Add Episode" to create one.</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
           {/* Movies Tab */}
-          <TabsContent value="movies" className="mt-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Manage Movies</h2>
+          <TabsContent value="movies" className="mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold">Manage Movies</h2>
               <Dialog
                 open={movieDialog}
                 onOpenChange={(open) => {
@@ -1209,14 +1297,14 @@ const AdminDashboard = () => {
                 <DialogTrigger asChild>
                   <Button
                     data-testid="add-movie-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612]"
+                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
                   >
-                    <Plus className="mr-2" /> Add Movie
+                    <Plus className="mr-2 h-4 w-4" /> Add Movie
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
                   <DialogHeader>
-                    <DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl">
                       {editingMovie ? "Edit Movie" : "Add New Movie"}
                     </DialogTitle>
                   </DialogHeader>
@@ -1240,10 +1328,8 @@ const AdminDashboard = () => {
                         <SelectTrigger data-testid="movie-show-select" className="w-full">
                           <SelectValue />
                         </SelectTrigger>
-
                         <SelectContent>
                           <SelectItem value="none">Single Movie</SelectItem>
-
                           {shows.map((show) => (
                             <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
                               {truncateText(show.name, 40)}
@@ -1252,7 +1338,7 @@ const AdminDashboard = () => {
                         </SelectContent>
                       </Select>
 
-                      <Label>Movie Title *</Label>
+                      <Label className="mt-4 block">Movie Title *</Label>
                       <Input
                         data-testid="movie-title-input"
                         value={movieForm.title}
@@ -1263,9 +1349,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>
-                        Video URL * (Google Drive, YouTube, or any video URL)
-                      </Label>
+                      <Label>Video URL *</Label>
                       <Input
                         data-testid="movie-video-url-input"
                         value={movieForm.video_url}
@@ -1290,6 +1374,7 @@ const AdminDashboard = () => {
                             description: e.target.value,
                           })
                         }
+                        rows={3}
                       />
                     </div>
                     <div>
@@ -1344,28 +1429,28 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {movies.map((movie) => {
                 const show = shows.find((s) => s.id === movie.show_id);
                 return (
                   <div
                     key={movie.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 overflow-hidden"
+                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0 mr-4">
-                        <p className="text-sm text-gray-400 mb-1 truncate" title={show?.name}>
-                          {show?.name}
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0 w-full">
+                        <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={show?.name}>
+                          {show?.name || "Single Movie"}
                         </p>
-                        <h3 className="text-lg font-semibold mb-2 break-words" title={movie.title}>
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={movie.title}>
                           {truncateText(movie.title, 60)}
                         </h3>
                         {movie.description && (
-                          <p className="text-sm text-gray-400 mb-2 break-words line-clamp-2">
+                          <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
                             {movie.description}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate" title={movie.video_url}>
+                        <p className="text-xs sm:text-sm text-gray-500 truncate" title={movie.video_url}>
                           URL: {truncateText(movie.video_url, 60)}
                         </p>
                       </div>
@@ -1375,118 +1460,125 @@ const AdminDashboard = () => {
                           onClick={() => handleEditMovie(movie)}
                           variant="outline"
                           size="sm"
+                          className="h-8 sm:h-9"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           data-testid={`delete-movie-${movie.id}`}
                           onClick={() => handleDeleteMovie(movie.id)}
                           variant="destructive"
                           size="sm"
+                          className="h-8 sm:h-9"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
                   </div>
                 );
               })}
+              {movies.length === 0 && (
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-gray-400">No movies found. Click "Add Movie" to create one.</p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Change Password Dialog */}
-<Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
-  <DialogContent className="bg-[#1a1a1a] border-gray-800">
-    <DialogHeader>
-      <DialogTitle>Change Password</DialogTitle>
-    </DialogHeader>
-    <form onSubmit={handleChangePassword} className="space-y-4">
-      <div>
-        <Label>Current Password</Label>
-        <div className="relative">
-          <Input
-            data-testid="current-password-input"
-            type={showCurrentPassword ? "text" : "password"}
-            value={passwordForm.current_password}
-            onChange={(e) =>
-              setPasswordForm({
-                ...passwordForm,
-                current_password: e.target.value,
-              })
-            }
-            required
-            className="pr-10"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-            onClick={() => setShowCurrentPassword((prev) => !prev)}
-          >
-            {showCurrentPassword ? (
-              <EyeOff
-                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                aria-hidden="true"
-              />
-            ) : (
-              <Eye
-                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                aria-hidden="true"
-              />
-            )}
-          </Button>
-        </div>
-      </div>
-      <div>
-        <Label>New Password</Label>
-        <div className="relative">
-          <Input
-            data-testid="new-password-input"
-            type={showNewPassword ? "text" : "password"}
-            value={passwordForm.new_password}
-            onChange={(e) =>
-              setPasswordForm({
-                ...passwordForm,
-                new_password: e.target.value,
-              })
-            }
-            required
-            className="pr-10"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-            onClick={() => setShowNewPassword((prev) => !prev)}
-          >
-            {showNewPassword ? (
-              <EyeOff
-                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                aria-hidden="true"
-              />
-            ) : (
-              <Eye
-                className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                aria-hidden="true"
-              />
-            )}
-          </Button>
-        </div>
-      </div>
-      <Button
-        data-testid="change-password-submit-btn"
-        type="submit"
-        className="w-full bg-[#e50914] hover:bg-[#f40612]"
-      >
-        Change Password
-      </Button>
-    </form>
-  </DialogContent>
-</Dialog>
+      <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
+        <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl">Change Password</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <Label>Current Password</Label>
+              <div className="relative">
+                <Input
+                  data-testid="current-password-input"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={passwordForm.current_password}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      current_password: e.target.value,
+                    })
+                  }
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Eye
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label>New Password</Label>
+              <div className="relative">
+                <Input
+                  data-testid="new-password-input"
+                  type={showNewPassword ? "text" : "password"}
+                  value={passwordForm.new_password}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      new_password: e.target.value,
+                    })
+                  }
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                >
+                  {showNewPassword ? (
+                    <EyeOff
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <Eye
+                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                      aria-hidden="true"
+                    />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <Button
+              data-testid="change-password-submit-btn"
+              type="submit"
+              className="w-full bg-[#e50914] hover:bg-[#f40612]"
+            >
+              Change Password
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
