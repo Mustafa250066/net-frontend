@@ -85,10 +85,10 @@ const MovieDetailPage = () => {
           <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
             <ArrowLeft className="mr-2" /> Back
           </Button>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-1" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
             {movie.title}
           </h1>
-          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6">{movie.description}</p>}
+          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-1">{movie.description}</p>}
           <Button onClick={() => handleWatch(movie.id)} className="bg-[#e50914] hover:bg-[#f40612] w-fit">
             <Play className="mr-2 h-5 w-5" /> Watch Now
           </Button>
@@ -98,7 +98,7 @@ const MovieDetailPage = () => {
       {/* Related Movies Section */}
       {relatedMovies.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-3xl font-bold mb-8">More in this Collection</h2>
+          <h2 className="text-3xl font-bold mb-8 break-words line-clamp-1">More in this Collection</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {relatedMovies.map((relatedMovie) => (
               <div

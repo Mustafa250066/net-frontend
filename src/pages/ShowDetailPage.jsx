@@ -102,13 +102,13 @@ const ShowDetailPage = () => {
           </Button>
 
           <h1
-            className="text-5xl sm:text-6xl font-bold mb-4"
+            className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-1"
             style={{ fontFamily: "Space Grotesk, sans-serif" }}
           >
             {show.name}
           </h1>
           {show.description && (
-            <p className="text-lg text-gray-300 max-w-3xl mb-6">
+            <p className="text-lg text-gray-300 max-w-3xl mb-6 break-words line-clamp-1">
               {show.description}
             </p>
           )}
@@ -117,11 +117,11 @@ const ShowDetailPage = () => {
 
       {/* Episodes Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 className="text-3xl font-bold mb-8">Seasons & Episodes</h2>
+        <h2 className="text-3xl font-bold mb-8 line-clamp-1">Seasons & Episodes</h2>
 
         {seasons.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400 text-lg">No seasons available yet</p>
+            <p className="text-gray-400 text-lg line-clamp-1">No seasons available yet</p>
           </div>
         ) : (
           <Accordion type="single" collapsible className="space-y-4">
