@@ -787,7 +787,7 @@ const AdminDashboard = () => {
                       </div>
                     )}
 
-                    <h3 className="text-lg font-semibold mb-2">{show.name}</h3>
+                    <h3 className="text-lg font-semibold mb-2 line-clamp-1">{show.name}</h3>
                     {show.description && (
                       <p className="text-sm text-gray-400 mb-3 line-clamp-2">
                         {show.description}
@@ -917,12 +917,12 @@ const AdminDashboard = () => {
                     key={show.id}
                     className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-4"
                   >
-                    <h3 className="text-xl font-semibold mb-4">{show.name}</h3>
+                    <h3 className="text-xl font-semibold mb-4 line-clamp-1">{show.name}</h3>
                     <div className="space-y-2">
                       {showSeasons.map((season) => (
                         <div
                           key={season.id}
-                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded"
+                          className="flex items-center justify-between bg-[#1a1a1a] p-3 rounded line-clamp-2"
                         >
                           <span>
                             Season {season.season_number}
@@ -1344,18 +1344,18 @@ const AdminDashboard = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 mb-1">
+                        <p className="text-sm text-gray-400 mb-1 line-clamp-1">
                           {show?.name}
                         </p>
-                        <h3 className="text-lg font-semibold mb-2">
+                        <h3 className="text-lg font-semibold mb-2 line-clamp-1">
                           {movie.title}
                         </h3>
                         {movie.description && (
-                          <p className="text-sm text-gray-400 mb-2">
+                          <p className="text-sm text-gray-400 mb-2 line-clamp-1">
                             {movie.description}
                           </p>
                         )}
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="text-sm text-gray-500 truncate line-clamp-1">
                           URL: {movie.video_url}
                         </p>
                       </div>
