@@ -74,7 +74,7 @@ const MovieDetailPage = () => {
         {(movie.poster_url || movie.thumbnail_url) && (
           <>
             <img
-              src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
+              src={convertToDirectUrl(movie.thumbnail_url || movie.poster_url)}
               alt={movie.title}
               className="w-full h-full object-cover"
             />
