@@ -67,7 +67,7 @@ const HomePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black overflow-x-hidden flex flex-col">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-gradient-to-b from-black to-transparent">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-4">
@@ -125,9 +125,10 @@ const HomePage = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <div className="pt-16 xs:pt-20 sm:pt-24 pb-6 sm:pb-12 px-2 xs:px-3 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      {/* Main Content - Added flex-grow to push footer down */}
+      <main className="flex-grow pt-16 xs:pt-20 sm:pt-24">
+        <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-6 lg:px-8 pb-4 sm:pb-6">
+          {/* Hero Section */}
           <div className="text-center mb-6 sm:mb-12">
             <h2 
               className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-2 sm:mb-4 text-[#e50914] px-1 break-words"
@@ -270,16 +271,18 @@ const HomePage = () => {
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <footer className="mt-8 sm:mt-16 pt-4 sm:pt-8 pb-4 sm:pb-6 border-t border-gray-800">
-            <div className="text-center text-gray-500 text-[10px] xs:text-xs sm:text-sm">
-              <p>© 2024 FlixPort. All rights reserved.</p>
-              <p className="mt-1 sm:mt-2">Unlimited entertainment at your fingertips</p>
-            </div>
-          </footer>
         </div>
-      </div>
+      </main>
+
+      {/* Footer - Removed extra top margin, added minimal padding */}
+      <footer className="border-t border-gray-800 bg-gradient-to-t from-black to-transparent">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="text-center text-gray-500 text-[10px] xs:text-xs sm:text-sm">
+            <p>© 2026 FlixPort. All rights reserved.</p>
+            <p className="mt-1">Unlimited entertainment at your fingertips</p>
+          </div>
+        </div>
+      </footer>
 
       {/* Custom CSS for extra small screens */}
       <style jsx>{`
