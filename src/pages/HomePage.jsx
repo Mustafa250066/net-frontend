@@ -248,7 +248,7 @@ const HomePage = () => {
               </div>
             ) : (
               <div className="space-y-6 sm:space-y-8">
-                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 xs:gap-3 sm:gap-5 px-1 xs:px-2 sm:px-0">
                   {paginatedShows.map((show) => (
                     /* Animated Wrapper */
                     <div
@@ -341,7 +341,7 @@ const HomePage = () => {
               </div>
             ) : (
               <div className="space-y-6 sm:space-y-8">
-                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 xs:gap-3 sm:gap-5 px-1 xs:px-2 sm:px-0">
                   {paginatedMovies.map((movie) => (
                     /* Animated Wrapper */
                     <div
