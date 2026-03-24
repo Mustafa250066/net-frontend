@@ -140,7 +140,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black overflow-x-hidden flex flex-col">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-gradient-to-b from-black to-transparent">
+      <header className="fixed top-0 w-full z-50 bg-gradient-to-b from-black via-gray-950 to-black">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-4">
           <div className="flex items-center justify-between">
             <h1 
@@ -179,7 +179,7 @@ const HomePage = () => {
 
           {/* Mobile Dropdown Menu */}
           {mobileMenuOpen && (
-            <div className="sm:hidden mt-2 pt-2 border-t border-gray-800 animate-in slide-in-from-top-2 duration-200">
+            <div className="sm:hidden mt-2 p-2 pt-7 pb-5 border-t border-gray-700 animate-in slide-in-from-top-2 duration-200" style={{height:80}}>
               <Button
                 onClick={() => {
                   navigate('/admin');
@@ -432,33 +432,10 @@ const HomePage = () => {
           overflow: hidden;
           border-radius: 0.5rem; /* Matches Tailwind's rounded-lg */
           padding: 2px; /* This controls the thickness of the glowing border */
+          background: linear-gradient(to right, #ff3333, #e50914, #8b0000); /* Theme gradient: Light Red -> Brand Red -> Dark Red */
         }
         
-        .animated-border-wrapper::before {
-          content: "";
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 250%; /* Large enough to cover corners dynamically */
-          height: 250%;
-          background: conic-gradient(
-            transparent 0deg, 
-            #e50914 45deg,    /* Red */
-            transparent 45deg, 
-            transparent 90deg, 
-            #ff3333 135deg,   /* Blue */
-            transparent 135deg, 
-            transparent 180deg, 
-            #8b0000 225deg,   /* Green */
-            transparent 225deg, 
-            transparent 270deg, 
-            #000000 315deg,   /* Yellow */
-            transparent 315deg
-          );
-          /* Translate centers the oversized gradient before spinning it */
-          animation: border-spin 4s linear infinite;
-          z-index: 0;
-        }
+        
         
         .animated-border-content {
           position: relative;

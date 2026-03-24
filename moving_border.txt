@@ -1,0 +1,84 @@
+for moving border add this below footer in HomePage.jsx
+
+{/* Custom CSS */}
+      <style jsx>{`
+        /* The New Animated Border CSS */
+        .animated-border-wrapper {
+          position: relative;
+          overflow: hidden;
+          border-radius: 0.5rem; /* Matches Tailwind's rounded-lg */
+          padding: 2px; /* This controls the thickness of the glowing border */
+        }
+        
+        .animated-border-wrapper::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 250%; /* Large enough to cover corners dynamically */
+          height: 250%;
+          background: conic-gradient(
+            transparent 0deg, 
+            #e50914 45deg,    /* Red */
+            transparent 45deg, 
+            transparent 90deg, 
+            #ff3333 135deg,   /* Blue */
+            transparent 135deg, 
+            transparent 180deg, 
+            #8b0000 225deg,   /* Green */
+            transparent 225deg, 
+            transparent 270deg, 
+            #000000 315deg,   /* Yellow */
+            transparent 315deg
+          );
+          /* Translate centers the oversized gradient before spinning it */
+          animation: border-spin 4s linear infinite;
+          z-index: 0;
+        }
+        
+        .animated-border-content {
+          position: relative;
+          z-index: 1;
+          border-radius: 0.4rem; /* Slightly smaller than outer border */
+          overflow: hidden;
+        }
+
+        @keyframes border-spin {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+
+        /* Existing CSS */
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @media (min-width: 480px) {
+          .xs\\:text-2xl { font-size: 1.5rem; }
+          .xs\\:text-3xl { font-size: 1.875rem; }
+          .xs\\:text-sm { font-size: 0.875rem; }
+          .xs\\:text-base { font-size: 1rem; }
+        }
+        
+        .break-words {
+          word-wrap: break-word;
+          word-break: break-word;
+          hyphens: auto;
+        }
+        
+        .overflow-x-hidden {
+          overflow-x: hidden;
+        }
+      `}</style>
