@@ -1,12 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API } from '../App';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Play, Search, Lock, Menu, X } from 'lucide-react';
+import { Play, Search, Lock, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import convertToDirectUrl from '../lib/convert';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -15,11 +24,26 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Pagination State
+  const [currentShowPage, setCurrentShowPage] = useState(1);
+  const [currentMoviePage, setCurrentMoviePage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
+  // Refs for scrolling
+  const showsRef = useRef(null);
+  const moviesRef = useRef(null);
 
   useEffect(() => {
     fetchShows();
     fetchMovies();
   }, []);
+
+  // Reset pagination on search
+  useEffect(() => {
+    setCurrentShowPage(1);
+    setCurrentMoviePage(1);
+  }, [searchQuery]);
 
   const fetchShows = async () => {
     try {
@@ -52,6 +76,53 @@ const HomePage = () => {
   const filteredMovies = movies.filter(movie =>
     (movie.title || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Pagination Logic
+  const totalShowPages = Math.ceil(filteredShows.length / ITEMS_PER_PAGE);
+  const totalMoviePages = Math.ceil(filteredMovies.length / ITEMS_PER_PAGE);
+
+  const paginatedShows = filteredShows.slice(
+    (currentShowPage - 1) * ITEMS_PER_PAGE,
+    currentShowPage * ITEMS_PER_PAGE
+  );
+
+  const paginatedMovies = filteredMovies.slice(
+    (currentMoviePage - 1) * ITEMS_PER_PAGE,
+    currentMoviePage * ITEMS_PER_PAGE
+  );
+
+  // Helper to render pagination items
+  const renderPaginationItems = (currentPage, totalPages, setPage, scrollRef) => {
+    const items = [];
+    const maxVisible = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            onClick={() => {
+              setPage(i);
+              if (scrollRef && scrollRef.current) {
+                scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+              }
+            }} 
+            isActive={currentPage === i}
+            className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
 
   // Skeleton loader component
   const SkeletonCard = () => (
@@ -159,7 +230,7 @@ const HomePage = () => {
 
           {/* Shows Section */}
           <div className="space-y-4 sm:space-y-8">
-            <div className="px-1 xs:px-2 sm:px-0">
+            <div className="px-1 xs:px-2 sm:px-0" ref={showsRef}>
               <h3 className="text-lg xs:text-xl sm:text-2xl font-semibold mb-3 sm:mb-6 break-words">
                 Browse Shows
               </h3>
@@ -176,51 +247,82 @@ const HomePage = () => {
                 <p className="text-gray-400 text-xs xs:text-sm sm:text-base md:text-lg">No shows found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
-                {filteredShows.map((show) => (
-                  /* Animated Wrapper */
-                  <div
-                    key={show.id}
-                    data-testid={`show-card-${show.id}`}
-                    onClick={() => navigate(`/show/${show.id}`)}
-                    className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
-                  >
-                    {/* Inner Card Content */}
-                    <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
-                      <div className="relative aspect-[2/3] overflow-hidden">
-                        {show.poster_url ? (
-                          <img
-                            src={convertToDirectUrl(show.poster_url)}
-                            alt={show.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                            <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
-                      <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
-                        <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={show.name}>
-                          {show.name}
-                        </h4>
-                        {show.description && (
-                          <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
-                            {show.description}
-                          </p>
-                        )}
+              <div className="space-y-6 sm:space-y-8">
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
+                  {paginatedShows.map((show) => (
+                    /* Animated Wrapper */
+                    <div
+                      key={show.id}
+                      data-testid={`show-card-${show.id}`}
+                      onClick={() => navigate(`/show/${show.id}`)}
+                      className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
+                    >
+                      {/* Inner Card Content */}
+                      <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
+                        <div className="relative aspect-[2/3] overflow-hidden">
+                          {show.poster_url ? (
+                            <img
+                              src={convertToDirectUrl(show.poster_url)}
+                              alt={show.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
+                          <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={show.name}>
+                            {show.name}
+                          </h4>
+                          {show.description && (
+                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                              {show.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Shows Pagination */}
+                {totalShowPages > 1 && (
+                  <Pagination className="mt-4 sm:mt-8">
+                    <PaginationContent className="flex-wrap justify-center">
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => {
+                            setCurrentShowPage(prev => Math.max(1, prev - 1));
+                            if (showsRef.current) showsRef.current.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={currentShowPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        />
+                      </PaginationItem>
+                      
+                      {renderPaginationItems(currentShowPage, totalShowPages, setCurrentShowPage, showsRef)}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => {
+                            setCurrentShowPage(prev => Math.min(totalShowPages, prev + 1));
+                            if (showsRef.current) showsRef.current.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={currentShowPage === totalShowPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
               </div>
             )}
           </div>
 
           {/* Movies Section */}
-          <div className="space-y-4 sm:space-y-8 mt-6 sm:mt-12">
+          <div className="space-y-4 sm:space-y-8 mt-6 sm:mt-12" ref={moviesRef}>
             <div className="px-1 xs:px-2 sm:px-0">
               <h3 className="text-lg xs:text-xl sm:text-2xl font-semibold mb-3 sm:mb-6 break-words">
                 Browse Movies
@@ -238,44 +340,75 @@ const HomePage = () => {
                 <p className="text-gray-400 text-xs xs:text-sm sm:text-base md:text-lg">No movies found</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
-                {filteredMovies.map((movie) => (
-                  /* Animated Wrapper */
-                  <div
-                    key={movie.id}
-                    onClick={() => navigate(`/movie/${movie.id}`)}
-                    className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
-                  >
-                    {/* Inner Card Content */}
-                    <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
-                      <div className="relative aspect-[2/3] overflow-hidden">
-                        {movie.poster_url || movie.thumbnail_url ? (
-                          <img
-                            src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
-                            alt={movie.title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                            <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      </div>
-                      <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
-                        <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={movie.title}>
-                          {movie.title}
-                        </h4>
-                        {movie.description && (
-                          <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
-                            {movie.description}
-                          </p>
-                        )}
+              <div className="space-y-6 sm:space-y-8">
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4 px-1 xs:px-2 sm:px-0">
+                  {paginatedMovies.map((movie) => (
+                    /* Animated Wrapper */
+                    <div
+                      key={movie.id}
+                      onClick={() => navigate(`/movie/${movie.id}`)}
+                      className="animated-border-wrapper group cursor-pointer transition-transform hover:scale-105 duration-200"
+                    >
+                      {/* Inner Card Content */}
+                      <div className="animated-border-content flex flex-col h-full bg-[#1a1a1a]">
+                        <div className="relative aspect-[2/3] overflow-hidden">
+                          {movie.poster_url || movie.thumbnail_url ? (
+                            <img
+                              src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
+                              alt={movie.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                        <div className="p-1.5 xs:p-2 sm:p-3 flex-grow">
+                          <h4 className="font-semibold text-[10px] xs:text-xs sm:text-sm truncate" title={movie.title}>
+                            {movie.title}
+                          </h4>
+                          {movie.description && (
+                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                              {movie.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Movies Pagination */}
+                {totalMoviePages > 1 && (
+                  <Pagination className="mt-4 sm:mt-8">
+                    <PaginationContent className="flex-wrap justify-center">
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => {
+                            setCurrentMoviePage(prev => Math.max(1, prev - 1));
+                            if (moviesRef.current) moviesRef.current.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={currentMoviePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        />
+                      </PaginationItem>
+                      
+                      {renderPaginationItems(currentMoviePage, totalMoviePages, setCurrentMoviePage, moviesRef)}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => {
+                            setCurrentMoviePage(prev => Math.min(totalMoviePages, prev + 1));
+                            if (moviesRef.current) moviesRef.current.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={currentMoviePage === totalMoviePages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
               </div>
             )}
           </div>

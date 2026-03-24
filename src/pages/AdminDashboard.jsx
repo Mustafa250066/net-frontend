@@ -21,9 +21,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -38,6 +47,13 @@ const AdminDashboard = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Pagination State
+  const [currentShowPage, setCurrentShowPage] = useState(1);
+  const [currentSeasonPage, setCurrentSeasonPage] = useState(1);
+  const [currentEpisodePage, setCurrentEpisodePage] = useState(1);
+  const [currentMoviePage, setCurrentMoviePage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
   // Modals
   const [showDialog, setShowDialog] = useState(false);
@@ -529,6 +545,37 @@ const AdminDashboard = () => {
     return text.substring(0, maxLength) + "...";
   };
 
+  // Helper to render pagination items
+  const renderPaginationItems = (currentPage, totalPages, setPage) => {
+    const items = [];
+    const maxVisible = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink 
+            onClick={() => {
+              setPage(i);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }} 
+            isActive={currentPage === i}
+            className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    return items;
+  };
+
   // Login Screen
   if (!isAuthenticated) {
     return (
@@ -832,75 +879,106 @@ const AdminDashboard = () => {
             </div>
 
             {/* Responsive Show Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {shows.map((show) => {
-                const hasPoster =
-                  show.poster_url && show.poster_url.trim() !== "";
-                return (
-                  <div
-                    key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden hover:border-gray-700 transition-colors"
-                  >
-                    {hasPoster ? (
-                      <img
-                        src={convertToDirectUrl(show.poster_url)}
-                        alt={show.name}
-                        className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
-                      />
-                    ) : (
-                      <div className="relative w-full h-40 sm:h-48 overflow-hidden rounded-lg mb-3">
-                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-play w-10 h-10 sm:w-12 sm:h-12 text-[#e50914]"
-                            aria-hidden="true"
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {shows
+                  .slice((currentShowPage - 1) * ITEMS_PER_PAGE, currentShowPage * ITEMS_PER_PAGE)
+                  .map((show) => {
+                    const hasPoster =
+                      show.poster_url && show.poster_url.trim() !== "";
+                    return (
+                      <div
+                        key={show.id}
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden hover:border-gray-700 transition-colors"
+                      >
+                        {hasPoster ? (
+                          <img
+                            src={convertToDirectUrl(show.poster_url)}
+                            alt={show.name}
+                            className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
+                          />
+                        ) : (
+                          <div className="relative w-full h-40 sm:h-48 overflow-hidden rounded-lg mb-3">
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="lucide lucide-play w-10 h-10 sm:w-12 sm:h-12 text-[#e50914]"
+                                aria-hidden="true"
+                              >
+                                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+
+                        <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
+                          {show.name}
+                        </h3>
+                        {show.description && (
+                          <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2 break-words">
+                            {show.description}
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <Button
+                            data-testid={`edit-show-${show.id}`}
+                            onClick={() => handleEditShow(show)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-xs sm:text-sm"
                           >
-                            <polygon points="6 3 20 12 6 21 6 3"></polygon>
-                          </svg>
+                            <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Edit
+                          </Button>
+                          <Button
+                            data-testid={`delete-show-${show.id}`}
+                            onClick={() => handleDeleteShow(show.id)}
+                            variant="destructive"
+                            size="sm"
+                            className="flex-1 text-xs sm:text-sm"
+                          >
+                            <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Delete
+                          </Button>
                         </div>
                       </div>
-                    )}
+                    );
+                  })}
+              </div>
 
-                    <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
-                      {show.name}
-                    </h3>
-                    {show.description && (
-                      <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2 break-words">
-                        {show.description}
-                      </p>
-                    )}
-                    <div className="flex gap-2">
-                      <Button
-                        data-testid={`edit-show-${show.id}`}
-                        onClick={() => handleEditShow(show)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-xs sm:text-sm"
-                      >
-                        <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Edit
-                      </Button>
-                      <Button
-                        data-testid={`delete-show-${show.id}`}
-                        onClick={() => handleDeleteShow(show.id)}
-                        variant="destructive"
-                        size="sm"
-                        className="flex-1 text-xs sm:text-sm"
-                      >
-                        <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Delete
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {Math.ceil(shows.length / ITEMS_PER_PAGE) > 1 && (
+                <Pagination>
+                  <PaginationContent className="flex-wrap justify-center">
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => {
+                          setCurrentShowPage(prev => Math.max(1, prev - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentShowPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems(currentShowPage, Math.ceil(shows.length / ITEMS_PER_PAGE), setCurrentShowPage)}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => {
+                          setCurrentShowPage(prev => Math.min(Math.ceil(shows.length / ITEMS_PER_PAGE), prev + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentShowPage === Math.ceil(shows.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
+
             {shows.length === 0 && (
               <div className="text-center py-8 sm:py-12">
                 <p className="text-gray-400">No shows found. Click "Add Show" to create one.</p>
@@ -997,54 +1075,84 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              {shows.map((show) => {
-                const showSeasons = getSeasonsByShow(show.id);
-                if (showSeasons.length === 0) return null;
-                return (
-                  <div
-                    key={show.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
-                  >
-                    <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
-                      {show.name}
-                    </h3>
-                    <div className="space-y-2">
-                      {showSeasons.map((season) => (
-                        <div
-                          key={season.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
-                        >
-                          <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
-                            Season {season.season_number}
-                            {season.name && ` - ${truncateText(season.name, 30)}`}
-                          </span>
-                          <div className="flex gap-2 flex-shrink-0 justify-end">
-                            <Button
-                              data-testid={`edit-season-${season.id}`}
-                              onClick={() => handleEditSeason(season)}
-                              variant="outline"
-                              size="sm"
-                              className="h-8 sm:h-9"
+            <div className="space-y-6">
+              <div className="space-y-3 sm:space-y-4">
+                {shows
+                  .slice((currentSeasonPage - 1) * ITEMS_PER_PAGE, currentSeasonPage * ITEMS_PER_PAGE)
+                  .map((show) => {
+                    const showSeasons = getSeasonsByShow(show.id);
+                    if (showSeasons.length === 0) return null;
+                    return (
+                      <div
+                        key={show.id}
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                      >
+                        <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
+                          {show.name}
+                        </h3>
+                        <div className="space-y-2">
+                          {showSeasons.map((season) => (
+                            <div
+                              key={season.id}
+                              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
                             >
-                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </Button>
-                            <Button
-                              data-testid={`delete-season-${season.id}`}
-                              onClick={() => handleDeleteSeason(season.id)}
-                              variant="destructive"
-                              size="sm"
-                              className="h-8 sm:h-9"
-                            >
-                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </Button>
-                          </div>
+                              <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                                Season {season.season_number}
+                                {season.name && ` - ${truncateText(season.name, 30)}`}
+                              </span>
+                              <div className="flex gap-2 flex-shrink-0 justify-end">
+                                <Button
+                                  data-testid={`edit-season-${season.id}`}
+                                  onClick={() => handleEditSeason(season)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 sm:h-9"
+                                >
+                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                                <Button
+                                  data-testid={`delete-season-${season.id}`}
+                                  onClick={() => handleDeleteSeason(season.id)}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="h-8 sm:h-9"
+                                >
+                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {Math.ceil(shows.length / ITEMS_PER_PAGE) > 1 && (
+                <Pagination>
+                  <PaginationContent className="flex-wrap justify-center">
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => {
+                          setCurrentSeasonPage(prev => Math.max(1, prev - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems(currentSeasonPage, Math.ceil(shows.length / ITEMS_PER_PAGE), setCurrentSeasonPage)}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => {
+                          setCurrentSeasonPage(prev => Math.min(Math.ceil(shows.length / ITEMS_PER_PAGE), prev + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentSeasonPage === Math.ceil(shows.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           </TabsContent>
 
@@ -1225,60 +1333,90 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              {episodes.map((episode) => {
-                const show = shows.find((s) => s.id === episode.show_id);
-                const season = seasons.find((s) => s.id === episode.season_id);
-                return (
-                  <div
-                    key={episode.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0 w-full">
-                        <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={`${show?.name} - Season ${season?.season_number}`}>
-                          {show?.name} - Season {season?.season_number}
-                        </p>
-                        <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
-                          Episode {episode.episode_number}: {truncateText(episode.title, 50)}
-                        </h3>
-                        {episode.description && (
-                          <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
-                            {episode.description}
-                          </p>
-                        )}
-                        <p className="text-xs sm:text-sm text-gray-500 truncate" title={episode.video_url}>
-                          URL: {truncateText(episode.video_url, 60)}
-                        </p>
+            <div className="space-y-6">
+              <div className="space-y-3 sm:space-y-4">
+                {episodes
+                  .slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE)
+                  .map((episode) => {
+                    const show = shows.find((s) => s.id === episode.show_id);
+                    const season = seasons.find((s) => s.id === episode.season_id);
+                    return (
+                      <div
+                        key={episode.id}
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                      >
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0 w-full">
+                            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={`${show?.name} - Season ${season?.season_number}`}>
+                              {show?.name} - Season {season?.season_number}
+                            </p>
+                            <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
+                              Episode {episode.episode_number}: {truncateText(episode.title, 50)}
+                            </h3>
+                            {episode.description && (
+                              <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
+                                {episode.description}
+                              </p>
+                            )}
+                            <p className="text-xs sm:text-sm text-gray-500 truncate" title={episode.video_url}>
+                              URL: {truncateText(episode.video_url, 60)}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              data-testid={`edit-episode-${episode.id}`}
+                              onClick={() => handleEditEpisode(episode)}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 sm:h-9"
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                            <Button
+                              data-testid={`delete-episode-${episode.id}`}
+                              onClick={() => handleDeleteEpisode(episode.id)}
+                              variant="destructive"
+                              size="sm"
+                              className="h-8 sm:h-9"
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <Button
-                          data-testid={`edit-episode-${episode.id}`}
-                          onClick={() => handleEditEpisode(episode)}
-                          variant="outline"
-                          size="sm"
-                          className="h-8 sm:h-9"
-                        >
-                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                        <Button
-                          data-testid={`delete-episode-${episode.id}`}
-                          onClick={() => handleDeleteEpisode(episode.id)}
-                          variant="destructive"
-                          size="sm"
-                          className="h-8 sm:h-9"
-                        >
-                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    );
+                  })}
+                {episodes.length === 0 && (
+                  <div className="text-center py-8 sm:py-12">
+                    <p className="text-gray-400">No episodes found. Click "Add Episode" to create one.</p>
                   </div>
-                );
-              })}
-              {episodes.length === 0 && (
-                <div className="text-center py-8 sm:py-12">
-                  <p className="text-gray-400">No episodes found. Click "Add Episode" to create one.</p>
-                </div>
+                )}
+              </div>
+
+              {Math.ceil(episodes.length / ITEMS_PER_PAGE) > 1 && (
+                <Pagination>
+                  <PaginationContent className="flex-wrap justify-center">
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => {
+                          setCurrentEpisodePage(prev => Math.max(1, prev - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentEpisodePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems(currentEpisodePage, Math.ceil(episodes.length / ITEMS_PER_PAGE), setCurrentEpisodePage)}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => {
+                          setCurrentEpisodePage(prev => Math.min(Math.ceil(episodes.length / ITEMS_PER_PAGE), prev + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentEpisodePage === Math.ceil(episodes.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               )}
             </div>
           </TabsContent>
@@ -1429,59 +1567,89 @@ const AdminDashboard = () => {
               </Dialog>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
-              {movies.map((movie) => {
-                const show = shows.find((s) => s.id === movie.show_id);
-                return (
-                  <div
-                    key={movie.id}
-                    className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
-                  >
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0 w-full">
-                        <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={show?.name}>
-                          {show?.name || "Single Movie"}
-                        </p>
-                        <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={movie.title}>
-                          {truncateText(movie.title, 60)}
-                        </h3>
-                        {movie.description && (
-                          <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
-                            {movie.description}
-                          </p>
-                        )}
-                        <p className="text-xs sm:text-sm text-gray-500 truncate" title={movie.video_url}>
-                          URL: {truncateText(movie.video_url, 60)}
-                        </p>
+            <div className="space-y-6">
+              <div className="space-y-3 sm:space-y-4">
+                {movies
+                  .slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE)
+                  .map((movie) => {
+                    const show = shows.find((s) => s.id === movie.show_id);
+                    return (
+                      <div
+                        key={movie.id}
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                      >
+                        <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                          <div className="flex-1 min-w-0 w-full">
+                            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={show?.name}>
+                              {show?.name || "Single Movie"}
+                            </p>
+                            <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={movie.title}>
+                              {truncateText(movie.title, 60)}
+                            </h3>
+                            {movie.description && (
+                              <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
+                                {movie.description}
+                              </p>
+                            )}
+                            <p className="text-xs sm:text-sm text-gray-500 truncate" title={movie.video_url}>
+                              URL: {truncateText(movie.video_url, 60)}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button
+                              data-testid={`edit-movie-${movie.id}`}
+                              onClick={() => handleEditMovie(movie)}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 sm:h-9"
+                            >
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                            <Button
+                              data-testid={`delete-movie-${movie.id}`}
+                              onClick={() => handleDeleteMovie(movie.id)}
+                              variant="destructive"
+                              size="sm"
+                              className="h-8 sm:h-9"
+                            >
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <Button
-                          data-testid={`edit-movie-${movie.id}`}
-                          onClick={() => handleEditMovie(movie)}
-                          variant="outline"
-                          size="sm"
-                          className="h-8 sm:h-9"
-                        >
-                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                        <Button
-                          data-testid={`delete-movie-${movie.id}`}
-                          onClick={() => handleDeleteMovie(movie.id)}
-                          variant="destructive"
-                          size="sm"
-                          className="h-8 sm:h-9"
-                        >
-                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    );
+                  })}
+                {movies.length === 0 && (
+                  <div className="text-center py-8 sm:py-12">
+                    <p className="text-gray-400">No movies found. Click "Add Movie" to create one.</p>
                   </div>
-                );
-              })}
-              {movies.length === 0 && (
-                <div className="text-center py-8 sm:py-12">
-                  <p className="text-gray-400">No movies found. Click "Add Movie" to create one.</p>
-                </div>
+                )}
+              </div>
+
+              {Math.ceil(movies.length / ITEMS_PER_PAGE) > 1 && (
+                <Pagination>
+                  <PaginationContent className="flex-wrap justify-center">
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => {
+                          setCurrentMoviePage(prev => Math.max(1, prev - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentMoviePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems(currentMoviePage, Math.ceil(movies.length / ITEMS_PER_PAGE), setCurrentMoviePage)}
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => {
+                          setCurrentMoviePage(prev => Math.min(Math.ceil(movies.length / ITEMS_PER_PAGE), prev + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={currentMoviePage === Math.ceil(movies.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               )}
             </div>
           </TabsContent>
