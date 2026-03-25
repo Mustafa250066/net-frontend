@@ -85,10 +85,10 @@ const MovieDetailPage = () => {
           <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
             <ArrowLeft className="mr-2" /> Back
           </Button>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-1" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
             {movie.title}
           </h1>
-          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-1">{movie.description}</p>}
+          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-2">{movie.description}</p>}
           <Button onClick={() => handleWatch(movie.id)} className="bg-[#e50914] hover:bg-[#f40612] w-fit">
             <Play className="mr-2 h-5 w-5" /> Watch Now
           </Button>

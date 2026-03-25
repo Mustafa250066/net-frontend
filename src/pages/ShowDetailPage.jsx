@@ -102,13 +102,13 @@ const ShowDetailPage = () => {
           </Button>
 
           <h1
-            className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-1"
+            className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2"
             style={{ fontFamily: "Space Grotesk, sans-serif" }}
           >
             {show.name}
           </h1>
           {show.description && (
-            <p className="text-lg text-gray-300 max-w-3xl mb-6 break-words line-clamp-1">
+            <p className="text-lg text-gray-300 max-w-3xl mb-6 break-words line-clamp-2">
               {show.description}
             </p>
           )}

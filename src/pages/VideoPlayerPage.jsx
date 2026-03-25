@@ -155,7 +155,7 @@ const VideoPlayerPage = () => {
       </div>
 
       {/* ----- VIDEO PLAYER ----- */}
-      <div className="max-w-7xl mx-auto my-8">
+      <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
         <VideoPlayer
           ref={videoRef}
           url={episode.video_url}
