@@ -12,6 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import convertToDirectUrl from "@/lib/convert";
+import getShortAlt from "@/lib/fallback";
 
 const ShowDetailPage = () => {
   const { showId } = useParams();
@@ -81,7 +82,7 @@ const ShowDetailPage = () => {
           <>
             <img
               src={convertToDirectUrl(show.poster_url)}
-              alt={show.name}
+              alt={getShortAlt(show.name)}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
@@ -102,7 +103,7 @@ const ShowDetailPage = () => {
           </Button>
 
           <h1
-            className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2"
+            className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2 break-words"
             style={{ fontFamily: "Space Grotesk, sans-serif" }}
           >
             {show.name}
@@ -117,11 +118,11 @@ const ShowDetailPage = () => {
 
       {/* Episodes Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 className="text-3xl font-bold mb-8 line-clamp-1">Seasons & Episodes</h2>
+        <h2 className="text-3xl font-bold mb-8 line-clamp-1 break-words">Seasons & Episodes</h2>
 
         {seasons.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400 text-lg line-clamp-1">No seasons available yet</p>
+            <p className="text-gray-400 text-lg line-clamp-1 break-words">No seasons available yet</p>
           </div>
         ) : (
           <Accordion type="single" collapsible className="space-y-4">
@@ -179,7 +180,7 @@ const ShowDetailPage = () => {
                             </span>
                           </div>
                           {episode.description && (
-                            <p className="text-gray-400 text-sm mt-1 line-clamp-2">
+                            <p className="text-gray-400 text-sm mt-1 line-clamp-2 break-words">
                               {episode.description}
                             </p>
                           )}

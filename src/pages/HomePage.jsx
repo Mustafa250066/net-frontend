@@ -16,6 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import getShortAlt from "@/lib/fallback";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -263,7 +264,7 @@ const HomePage = () => {
                           {show.poster_url ? (
                             <img
                               src={convertToDirectUrl(show.poster_url)}
-                              alt={show.name}
+                              alt={getShortAlt(show.name)}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               loading="lazy"
                             />
@@ -279,7 +280,7 @@ const HomePage = () => {
                             {show.name}
                           </h4>
                           {show.description && (
-                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2 break-words">
                               {show.description}
                             </p>
                           )}
@@ -355,7 +356,7 @@ const HomePage = () => {
                           {movie.poster_url || movie.thumbnail_url ? (
                             <img
                               src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
-                              alt={movie.title}
+                              alt={getShortAlt(movie.title)}
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                               loading="lazy"
                             />
@@ -371,7 +372,7 @@ const HomePage = () => {
                             {movie.title}
                           </h4>
                           {movie.description && (
-                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2">
+                            <p className="text-[8px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5 xs:mt-1 line-clamp-2 break-words">
                               {movie.description}
                             </p>
                           )}

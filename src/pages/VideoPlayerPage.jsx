@@ -168,18 +168,18 @@ const VideoPlayerPage = () => {
       {showInfo && (
         <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent p-8 z-40">
           <div className="max-w-4xl mx-auto">
-            {show && <p className="text-gray-400 text-sm mb-2">{show.name}</p>}
+            {show && <p className="text-gray-400 text-sm mb-2 line-clamp-2 break-words">{show.name}</p>}
 
-            <h2 className="text-3xl font-bold mb-2">{episode.title}</h2>
+            <h2 className="text-3xl font-bold mb-2 line-clamp-2 break-words">{episode.title}</h2>
 
             {type !== "movie" && (
-              <p className="text-gray-300 mb-4">
+              <p className="text-gray-300 mb-4 line-clamp-2 break-words">
                 Episode {episode.episode_number}
               </p>
             )}
 
             {episode.description && (
-              <p className="text-gray-400">{episode.description}</p>
+              <p className="text-gray-400 line-clamp-2 break-words">{episode.description}</p>
             )}
           </div>
         </div>

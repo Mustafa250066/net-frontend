@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from "../lib/convert";
+import getShortAlt from "@/lib/fallback";
 
 const MovieDetailPage = () => {
   const { movieId } = useParams();
@@ -75,7 +76,7 @@ const MovieDetailPage = () => {
           <>
             <img
               src={convertToDirectUrl(movie.thumbnail_url || movie.poster_url)}
-              alt={movie.title}
+              alt={getShortAlt(movie.title)}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
@@ -85,11 +86,11 @@ const MovieDetailPage = () => {
           <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
             <ArrowLeft className="mr-2" /> Back
           </Button>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2 break-words ml-4" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
             {movie.title}
           </h1>
-          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-2">{movie.description}</p>}
-          <Button onClick={() => handleWatch(movie.id)} className="bg-[#e50914] hover:bg-[#f40612] w-fit">
+          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-2 break-words ml-4">{movie.description}</p>}
+          <Button onClick={() => handleWatch(movie.id)} className="bg-[#e50914] hover:bg-[#f40612] w-fit ml-4">
             <Play className="mr-2 h-5 w-5" /> Watch Now
           </Button>
         </div>
@@ -110,7 +111,7 @@ const MovieDetailPage = () => {
                   {relatedMovie.poster_url || relatedMovie.thumbnail_url ? (
                     <img
                       src={convertToDirectUrl(relatedMovie.poster_url || relatedMovie.thumbnail_url)}
-                      alt={relatedMovie.title}
+                      alt={getShortAlt(relatedMovie.title)}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   ) : (
@@ -123,7 +124,7 @@ const MovieDetailPage = () => {
                 <div className="p-3">
                   <h4 className="font-semibold text-sm truncate">{relatedMovie.title}</h4>
                   {relatedMovie.description && (
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{relatedMovie.description}</p>
+                    <p className="text-xs text-gray-400 mt-1 line-clamp-2  break-words">{relatedMovie.description}</p>
                   )}
                 </div>
               </div>
