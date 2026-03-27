@@ -434,7 +434,7 @@ const AdminDashboard = () => {
     try {
       const movieData = {
         ...movieForm,
-        duration: movieForm.duration ? parseInt(movieForm.duration) : null,
+        duration: movieForm.duration ? Number(movieForm.duration) : null,
       };
       await axiosInstance.post("/movies", movieData);
       toast.success("Movie created successfully");
@@ -488,7 +488,7 @@ const AdminDashboard = () => {
     try {
       const movieData = {
         ...movieForm,
-        duration: movieForm.duration ? parseInt(movieForm.duration) : null,
+        duration: movieForm.duration ? Number(movieForm.duration) : null,
       };
       await axiosInstance.put(`/movies/${editingMovie.id}`, movieData);
       toast.success("Movie updated successfully");
@@ -1295,7 +1295,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>Duration (minutes)</Label>
+                      <Label>Duration (in minutes)</Label>
                       <Input
                         data-testid="episode-duration-input"
                         type="number"
@@ -1476,7 +1476,7 @@ const AdminDashboard = () => {
                         </SelectContent>
                       </Select>
 
-                      <Label className="mt-4 block">Movie Title *</Label>
+                      <Label className="mt-4 mb-1 block">Movie Title *</Label>
                       <Input
                         data-testid="movie-title-input"
                         value={movieForm.title}
@@ -1516,7 +1516,7 @@ const AdminDashboard = () => {
                       />
                     </div>
                     <div>
-                      <Label>Duration (seconds)</Label>
+                      <Label>Duration (in minutes)</Label>
                       <Input
                         data-testid="movie-duration-input"
                         type="number"

@@ -72,4 +72,4 @@ export default function convertToDirectUrl(url) {
 
   return trimmed;
 }
-
+

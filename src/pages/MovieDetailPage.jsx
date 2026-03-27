@@ -7,6 +7,7 @@ import { ArrowLeft, Play } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from "../lib/convert";
 import getShortAlt from "@/lib/fallback";
+import formatDuration from "@/lib/formatDuration";
 
 const MovieDetailPage = () => {
   const { movieId } = useParams();
@@ -14,6 +15,7 @@ const MovieDetailPage = () => {
   const [movie, setMovie] = useState(null);
   const [relatedMovies, setRelatedMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showName, setShowName] = useState(null);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -27,12 +29,16 @@ const MovieDetailPage = () => {
 
         if (currentMovie.show_id) {
           const relatedRes = await axios.get(
-            `${API}/movies?show_id=${currentMovie.show_id}`
+            `${API}/movies?show_id=${currentMovie.show_id}`,
           );
           // Filter out the current movie from the list of related movies
           const otherMovies = relatedRes.data.filter(
-            (m) => m.id !== currentMovie.id
+            (m) => m.id !== currentMovie.id,
           );
+          const showRes = await axios.get(
+            `${API}/shows/${currentMovie.show_id}`,
+          );
+          setShowName(showRes.data.name);
           setRelatedMovies(otherMovies);
         }
       } catch (error) {
@@ -71,35 +77,86 @@ const MovieDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="relative h-[70vh] overflow-hidden">
+      {/* --- NETFLIX STYLE HEADER --- */}
+      <div className="relative h-[75vh] sm:h-[85vh] w-full overflow-hidden bg-[#0a0a0a]">
+        {/* Background Image with Dual Gradients */}
         {(movie.poster_url || movie.thumbnail_url) && (
-          <>
+          <div className="absolute inset-0">
             <img
-              src={convertToDirectUrl(movie.thumbnail_url || movie.poster_url)}
+              src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
               alt={getShortAlt(movie.title)}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover opacity-80"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
-          </>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+          </div>
         )}
-        <div className="absolute inset-0 flex flex-col justify-end p-0 max-w-7xl mx-auto">
-          <Button onClick={() => navigate("/")} variant="ghost" className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black">
-            <ArrowLeft className="mr-2" /> Back
-          </Button>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-4 line-clamp-2 break-words ml-4" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
-            {movie.title}
-          </h1>
-          {movie.description && <p className="text-lg text-gray-300 max-w-3xl mb-6 line-clamp-2 break-words ml-4">{movie.description}</p>}
-          <Button onClick={() => handleWatch(movie.id)} className="bg-[#e50914] hover:bg-[#f40612] w-fit ml-4">
-            <Play className="mr-2 h-5 w-5" /> Watch Now
-          </Button>
+
+        {/* Back Button */}
+        <Button
+          onClick={() => navigate("/")}
+          variant="ghost"
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black"
+        >
+          <ArrowLeft className="mr-2 h-5 w-5 " /> Back
+        </Button>
+
+        {/* Main Content Container */}
+        <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 md:p-16 max-w-7xl mx-auto w-full z-10 pb-12 sm:pb-20">
+          <div className="max-w-2xl lg:max-w-3xl space-y-4">
+            {/* Show / Franchise Badge */}
+            <div className="flex items-center gap-2">
+              <span className="text-[#e50914] font-bold tracking-wider text-xs sm:text-sm uppercase drop-shadow-md line-clamp-1 break-words">
+                {showName ? showName : "Franchise Movie"}
+              </span>
+            </div>
+
+            {/* Movie Title */}
+            <h1
+              className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-white drop-shadow-2xl line-clamp-2 break-words leading-tight"
+              style={{ fontFamily: "Space Grotesk, sans-serif" }}
+            >
+              {movie.title}
+            </h1>
+
+            <div className="flex items-center gap-3 text-sm sm:text-base font-medium text-gray-300 drop-shadow-md  line-clamp-1 break-words">
+              {movie.duration && (
+                <span className="line-clamp-1 break-words">
+                  {formatDuration(movie.duration)}
+                </span>
+              )}
+              <span className="px-1.5 py-0.5 border border-[#EFBF04] rounded text-xs text-[#EFBF04]  font-bold  line-clamp-1 break-words">
+                HD
+              </span>
+            </div>
+
+            {/* Movie Description */}
+            {movie.description && (
+              <p className="text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md line-clamp-3 break-words leading-relaxed max-w-2xl">
+                {movie.description}
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex pt-4 sm:pt-6 w-full sm:w-max mt-2">
+              <Button
+                onClick={() => handleWatch(movie.id)}
+                className="w-full sm:w-auto h-12 sm:h-14 bg-[#e50914] hover:bg-[#f40612] text-sm sm:text-base md:text-lg font-bold px-6 sm:px-8 rounded-md transition-all duration-300 flex justify-center items-center gap-2 shadow-lg hover:shadow-[#e50914]/30 hover:scale-105 active:scale-95 whitespace-nowrap"
+              >
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 fill-current shrink-0" />
+                <span>Play</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Related Movies Section */}
       {relatedMovies.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-3xl font-bold mb-8 break-words line-clamp-1">More in this Collection</h2>
+          <h2 className="text-3xl font-bold mb-8 break-words line-clamp-1">
+            More in this Collection
+          </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {relatedMovies.map((relatedMovie) => (
               <div
@@ -110,7 +167,9 @@ const MovieDetailPage = () => {
                 <div className="relative aspect-[2/3] overflow-hidden">
                   {relatedMovie.poster_url || relatedMovie.thumbnail_url ? (
                     <img
-                      src={convertToDirectUrl(relatedMovie.poster_url || relatedMovie.thumbnail_url)}
+                      src={convertToDirectUrl(
+                        relatedMovie.poster_url || relatedMovie.thumbnail_url,
+                      )}
                       alt={getShortAlt(relatedMovie.title)}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -122,9 +181,13 @@ const MovieDetailPage = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
                 <div className="p-3">
-                  <h4 className="font-semibold text-sm truncate">{relatedMovie.title}</h4>
+                  <h4 className="font-semibold text-sm truncate">
+                    {relatedMovie.title}
+                  </h4>
                   {relatedMovie.description && (
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2  break-words">{relatedMovie.description}</p>
+                    <p className="text-xs text-gray-400 mt-1 line-clamp-2  break-words">
+                      {relatedMovie.description}
+                    </p>
                   )}
                 </div>
               </div>
