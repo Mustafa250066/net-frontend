@@ -55,6 +55,33 @@ const AdminDashboard = () => {
   const [currentMoviePage, setCurrentMoviePage] = useState(1);
   const ITEMS_PER_PAGE = 9;
 
+  // 1. Shows Page Fix
+  useEffect(() => {
+    const totalPages = Math.ceil(shows.length / ITEMS_PER_PAGE) || 1;
+    if (currentShowPage > totalPages) setCurrentShowPage(totalPages);
+  }, [shows.length, currentShowPage]);
+
+  // 2. Seasons Page Fix (Filtered shows ke hisaab se)
+  useEffect(() => {
+    const showsWithSeasons = shows.filter(show => getSeasonsByShow(show.id).length > 0);
+    const totalPages = Math.ceil(showsWithSeasons.length / ITEMS_PER_PAGE) || 1;
+    if (currentSeasonPage > totalPages) setCurrentSeasonPage(totalPages);
+  }, [shows, seasons, currentSeasonPage]); 
+
+  // 3. Episodes Page Fix
+  useEffect(() => {
+    const totalPages = Math.ceil(episodes.length / ITEMS_PER_PAGE) || 1;
+    if (currentEpisodePage > totalPages) setCurrentEpisodePage(totalPages);
+  }, [episodes.length, currentEpisodePage]);
+
+  // 4. Movies Page Fix
+  useEffect(() => {
+    const totalPages = Math.ceil(movies.length / ITEMS_PER_PAGE) || 1;
+    if (currentMoviePage > totalPages) setCurrentMoviePage(totalPages);
+  }, [movies.length, currentMoviePage]);
+
+  // --- END BUG FIXES ---
+
   // Modals
   const [showDialog, setShowDialog] = useState(false);
   const [seasonDialog, setSeasonDialog] = useState(false);
@@ -711,7 +738,7 @@ const AdminDashboard = () => {
                 data-testid="logout-btn"
                 onClick={handleLogout}
                 variant="outline"
-                className="border-red-500 text-red-500 hover:text-white hover:bg-red-500"
+                className="border-[#e50914] text-[#e50914] hover:text-white hover:bg-[#e50914]"
                 size="sm"
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -988,173 +1015,190 @@ const AdminDashboard = () => {
 
           {/* Seasons Tab */}
           <TabsContent value="seasons" className="mt-4 sm:mt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
-              <Dialog
-                open={seasonDialog}
-                onOpenChange={(open) => {
-                  if (!open) handleCloseSeasonDialog();
-                  else setSeasonDialog(true);
-                }}
+  {(() => {
+    // BUG FIX: Sirf un shows ko filter karein jin ke andar seasons mojud hain
+    const showsWithSeasons = shows.filter((show) => getSeasonsByShow(show.id).length > 0);
+    const totalSeasonPages = Math.ceil(showsWithSeasons.length / ITEMS_PER_PAGE);
+
+    return (
+      <>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
+          <Dialog
+            open={seasonDialog}
+            onOpenChange={(open) => {
+              if (!open) handleCloseSeasonDialog();
+              else setSeasonDialog(true);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button
+                data-testid="add-season-btn"
+                className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
               >
-                <DialogTrigger asChild>
-                  <Button
-                    data-testid="add-season-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> Add Season
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
-                      {editingSeason ? "Edit Season" : "Add New Season"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form
-                    onSubmit={
-                      editingSeason ? handleUpdateSeason : handleCreateSeason
+                <Plus className="mr-2 h-4 w-4" /> Add Season
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+              <DialogHeader>
+                <DialogTitle className="text-lg sm:text-xl">
+                  {editingSeason ? "Edit Season" : "Add New Season"}
+                </DialogTitle>
+              </DialogHeader>
+              <form
+                onSubmit={
+                  editingSeason ? handleUpdateSeason : handleCreateSeason
+                }
+                className="space-y-4"
+              >
+                <div>
+                  <Label>Select Show *</Label>
+                  <Select
+                    value={seasonForm.show_id}
+                    onValueChange={(value) =>
+                      setSeasonForm({ ...seasonForm, show_id: value })
                     }
-                    className="space-y-4"
+                    required
                   >
-                    <div>
-                      <Label>Select Show *</Label>
-                      <Select
-                        value={seasonForm.show_id}
-                        onValueChange={(value) =>
-                          setSeasonForm({ ...seasonForm, show_id: value })
-                        }
-                        required
-                      >
-                        <SelectTrigger data-testid="season-show-select" className="w-full">
-                          <SelectValue placeholder="Select a show" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
-                              {truncateText(show.name, 40)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Season Number *</Label>
-                      <Input
-                        data-testid="season-number-input"
-                        type="number"
-                        value={seasonForm.season_number}
-                        onChange={(e) =>
-                          setSeasonForm({
-                            ...seasonForm,
-                            season_number: e.target.value,
-                          })
-                        }
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Season Name (Optional)</Label>
-                      <Input
-                        data-testid="season-name-input"
-                        value={seasonForm.name}
-                        onChange={(e) =>
-                          setSeasonForm({ ...seasonForm, name: e.target.value })
-                        }
-                      />
-                    </div>
-                    <Button
-                      data-testid="create-season-btn"
-                      type="submit"
-                      className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                    >
-                      {editingSeason ? "Update Season" : "Create Season"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
+                    <SelectTrigger data-testid="season-show-select" className="w-full">
+                      <SelectValue placeholder="Select a show" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shows.map((show) => (
+                        <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                          {truncateText(show.name, 40)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Season Number *</Label>
+                  <Input
+                    data-testid="season-number-input"
+                    type="number"
+                    value={seasonForm.season_number}
+                    onChange={(e) =>
+                      setSeasonForm({
+                        ...seasonForm,
+                        season_number: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Season Name (Optional)</Label>
+                  <Input
+                    data-testid="season-name-input"
+                    value={seasonForm.name}
+                    onChange={(e) =>
+                      setSeasonForm({ ...seasonForm, name: e.target.value })
+                    }
+                  />
+                </div>
+                <Button
+                  data-testid="create-season-btn"
+                  type="submit"
+                  className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                >
+                  {editingSeason ? "Update Season" : "Create Season"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3 sm:space-y-4">
-                {shows
-                  .slice((currentSeasonPage - 1) * ITEMS_PER_PAGE, currentSeasonPage * ITEMS_PER_PAGE)
-                  .map((show) => {
-                    const showSeasons = getSeasonsByShow(show.id);
-                    if (showSeasons.length === 0) return null;
-                    return (
-                      <div
-                        key={show.id}
-                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
-                      >
-                        <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
-                          {show.name}
-                        </h3>
-                        <div className="space-y-2">
-                          {showSeasons.map((season) => (
-                            <div
-                              key={season.id}
-                              className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
-                            >
-                              <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
-                                Season {season.season_number}
-                                {season.name && ` - ${truncateText(season.name, 30)}`}
-                              </span>
-                              <div className="flex gap-2 flex-shrink-0 justify-end">
-                                <Button
-                                  data-testid={`edit-season-${season.id}`}
-                                  onClick={() => handleEditSeason(season)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 sm:h-9"
-                                >
-                                  <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                                </Button>
-                                <Button
-                                  data-testid={`delete-season-${season.id}`}
-                                  onClick={() => handleDeleteSeason(season.id)}
-                                  variant="destructive"
-                                  size="sm"
-                                  className="h-8 sm:h-9"
-                                >
-                                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+        <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4">
+            {showsWithSeasons.length === 0 ? (
+              <div className="text-center py-8 sm:py-12">
+                <p className="text-gray-400">No seasons found. Click "Add Season" to create one.</p>
               </div>
+            ) : (
+              showsWithSeasons
+                .slice((currentSeasonPage - 1) * ITEMS_PER_PAGE, currentSeasonPage * ITEMS_PER_PAGE)
+                .map((show) => {
+                  const showSeasons = getSeasonsByShow(show.id);
+                  // "if (showSeasons.length === 0) return null" hata diya hai kyunke ab list filtered hai
+                  return (
+                    <div
+                      key={show.id}
+                      className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                    >
+                      <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
+                        {show.name}
+                      </h3>
+                      <div className="space-y-2">
+                        {showSeasons.map((season) => (
+                          <div
+                            key={season.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
+                          >
+                            <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                              Season {season.season_number}
+                              {season.name && ` - ${truncateText(season.name, 30)}`}
+                            </span>
+                            <div className="flex gap-2 flex-shrink-0 justify-end">
+                              <Button
+                                data-testid={`edit-season-${season.id}`}
+                                onClick={() => handleEditSeason(season)}
+                                variant="outline"
+                                size="sm"
+                                className="h-8 sm:h-9"
+                              >
+                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                              </Button>
+                              <Button
+                                data-testid={`delete-season-${season.id}`}
+                                onClick={() => handleDeleteSeason(season.id)}
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 sm:h-9"
+                              >
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
 
-              {Math.ceil(shows.length / ITEMS_PER_PAGE) > 1 && (
-                <Pagination>
-                  <PaginationContent className="flex-wrap justify-center">
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => {
-                          setCurrentSeasonPage(prev => Math.max(1, prev - 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
-                      />
-                    </PaginationItem>
-                    {renderPaginationItems(currentSeasonPage, Math.ceil(shows.length / ITEMS_PER_PAGE), setCurrentSeasonPage)}
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => {
-                          setCurrentSeasonPage(prev => Math.min(Math.ceil(shows.length / ITEMS_PER_PAGE), prev + 1));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className={currentSeasonPage === Math.ceil(shows.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
-            </div>
-          </TabsContent>
+          {/* Pagination ab updated variables (totalSeasonPages) ke hisab se chalegi */}
+          {totalSeasonPages > 1 && (
+            <Pagination>
+              <PaginationContent className="flex-wrap justify-center">
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => {
+                      setCurrentSeasonPage(prev => Math.max(1, prev - 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                  />
+                </PaginationItem>
+                {renderPaginationItems(currentSeasonPage, totalSeasonPages, setCurrentSeasonPage)}
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => {
+                      setCurrentSeasonPage(prev => Math.min(totalSeasonPages, prev + 1));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={currentSeasonPage === totalSeasonPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+      </>
+    );
+  })()}
+</TabsContent>
 
           {/* Episodes Tab */}
           <TabsContent value="episodes" className="mt-4 sm:mt-6">
