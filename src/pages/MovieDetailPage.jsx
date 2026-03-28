@@ -96,7 +96,7 @@ const MovieDetailPage = () => {
         <Button
           onClick={() => navigate("/")}
           variant="ghost"
-          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black"
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-[#e50914] backdrop-blur-sm text-white hover:bg-[#e50914db] hover:text-white"
         >
           <ArrowLeft className="mr-2 h-5 w-5 " /> Back
         </Button>
@@ -125,7 +125,7 @@ const MovieDetailPage = () => {
                   {formatDuration(movie.duration)}
                 </span>
               )}
-              <span className="px-1.5 py-0.5 border border-[#EFBF04] rounded text-xs text-[#EFBF04]  font-bold  line-clamp-1 break-words">
+              <span className="px-1.5 py-0.5 border border-gray-500 rounded text-xs  font-bold  line-clamp-1 break-words">
                 HD
               </span>
             </div>
