@@ -254,10 +254,24 @@ const AdminDashboard = () => {
   // Season Operations
   const handleCreateSeason = async (e) => {
     e.preventDefault();
+    const seasonNumber = parseInt(seasonForm.season_number);
+    if (isNaN(seasonNumber) || seasonNumber <= 0) {
+      toast.error("Season number must be a positive number");
+      return;
+    }
+
+    const duplicateSeason = seasons.find(
+      (s) => s.show_id === seasonForm.show_id && s.season_number === seasonNumber
+    );
+    if (duplicateSeason) {
+      toast.error(`Season ${seasonNumber} already exists for this show`);
+      return;
+    }
+
     try {
       await axiosInstance.post("/seasons", {
         ...seasonForm,
-        season_number: parseInt(seasonForm.season_number),
+        season_number: seasonNumber,
       });
       toast.success("Season created successfully");
       setSeasonDialog(false);
@@ -287,10 +301,27 @@ const AdminDashboard = () => {
 
   const handleUpdateSeason = async (e) => {
     e.preventDefault();
+    const seasonNumber = parseInt(seasonForm.season_number);
+    if (isNaN(seasonNumber) || seasonNumber <= 0) {
+      toast.error("Season number must be a positive number");
+      return;
+    }
+
+    const duplicateSeason = seasons.find(
+      (s) =>
+        s.show_id === seasonForm.show_id &&
+        s.season_number === seasonNumber &&
+        s.id !== editingSeason.id
+    );
+    if (duplicateSeason) {
+      toast.error(`Season ${seasonNumber} already exists for this show`);
+      return;
+    }
+
     try {
       await axiosInstance.put(`/seasons/${editingSeason.id}`, {
         ...seasonForm,
-        season_number: parseInt(seasonForm.season_number),
+        season_number: seasonNumber,
       });
       toast.success("Season updated successfully");
       setSeasonDialog(false);
@@ -337,10 +368,26 @@ const AdminDashboard = () => {
       return;
     }
 
+    const episodeNumber = parseInt(episodeForm.episode_number);
+    if (isNaN(episodeNumber) || episodeNumber <= 0) {
+      toast.error("Episode number must be a positive number");
+      return;
+    }
+
+    const duplicateEpisode = episodes.find(
+      (e) =>
+        e.season_id === episodeForm.season_id &&
+        e.episode_number === episodeNumber
+    );
+    if (duplicateEpisode) {
+      toast.error(`Episode ${episodeNumber} already exists for this season`);
+      return;
+    }
+
     try {
       const episodeData = {
         ...episodeForm,
-        episode_number: parseInt(episodeForm.episode_number),
+        episode_number: episodeNumber,
         duration: episodeForm.duration ? parseInt(episodeForm.duration) : null,
       };
       await axiosInstance.post("/episodes", episodeData);
@@ -417,10 +464,27 @@ const AdminDashboard = () => {
       return;
     }
 
+    const episodeNumber = parseInt(episodeForm.episode_number);
+    if (isNaN(episodeNumber) || episodeNumber <= 0) {
+      toast.error("Episode number must be a positive number");
+      return;
+    }
+
+    const duplicateEpisode = episodes.find(
+      (e) =>
+        e.season_id === episodeForm.season_id &&
+        e.episode_number === episodeNumber &&
+        e.id !== editingEpisode.id
+    );
+    if (duplicateEpisode) {
+      toast.error(`Episode ${episodeNumber} already exists for this season`);
+      return;
+    }
+
     try {
       const episodeData = {
         ...episodeForm,
-        episode_number: parseInt(episodeForm.episode_number),
+        episode_number: episodeNumber,
         duration: episodeForm.duration ? parseInt(episodeForm.duration) : null,
       };
 
@@ -635,6 +699,7 @@ const AdminDashboard = () => {
                   }
                   required
                   className="mt-1"
+                  placeholder="Admin username"
                 />
               </div>
               <div>
@@ -650,6 +715,7 @@ const AdminDashboard = () => {
                     }
                     required
                     className="mt-1 pr-10"
+                    placeholder="Admin password"
                   />
                  <Button
                   type="button"
@@ -864,6 +930,7 @@ const AdminDashboard = () => {
                           setShowForm({ ...showForm, name: e.target.value })
                         }
                         required
+                        placeholder="E.g. Stranger Things"
                       />
                     </div>
                     <div>
@@ -878,6 +945,7 @@ const AdminDashboard = () => {
                           })
                         }
                         rows={3}
+                        placeholder="Brief description of the show..."
                       />
                     </div>
                     <div>
@@ -891,6 +959,7 @@ const AdminDashboard = () => {
                             poster_url: e.target.value,
                           })
                         }
+                        placeholder="https://example.com/poster.jpg"
                       />
                     </div>
                     <Button
@@ -1085,6 +1154,7 @@ const AdminDashboard = () => {
                       })
                     }
                     required
+                    placeholder="1, 2, 3..."
                   />
                 </div>
                 <div>
@@ -1095,6 +1165,7 @@ const AdminDashboard = () => {
                     onChange={(e) =>
                       setSeasonForm({ ...seasonForm, name: e.target.value })
                     }
+                    placeholder="E.g. Season 1: The Beginning"
                   />
                 </div>
                 <Button
@@ -1294,6 +1365,7 @@ const AdminDashboard = () => {
                           })
                         }
                         required
+                        placeholder="1, 2, 3..."
                       />
                     </div>
                     <div>
@@ -1307,6 +1379,7 @@ const AdminDashboard = () => {
                             title: e.target.value,
                           })
                         }
+                        placeholder="E.g. Chapter One: The Vanishing of Will Byers"
                       />
                     </div>
                     <div>
@@ -1336,6 +1409,7 @@ const AdminDashboard = () => {
                           })
                         }
                         rows={3}
+                        placeholder="Episode summary..."
                       />
                     </div>
                     <div>
@@ -1350,6 +1424,7 @@ const AdminDashboard = () => {
                             duration: e.target.value,
                           })
                         }
+                        placeholder="45"
                       />
                     </div>
                     <div>
@@ -1363,6 +1438,7 @@ const AdminDashboard = () => {
                             thumbnail_url: e.target.value,
                           })
                         }
+                        placeholder="https://..."
                       />
                     </div>
                     <Button
@@ -1528,6 +1604,7 @@ const AdminDashboard = () => {
                           setMovieForm({ ...movieForm, title: e.target.value })
                         }
                         required
+                        placeholder="E.g. Inception"
                       />
                     </div>
                     <div>
@@ -1557,6 +1634,7 @@ const AdminDashboard = () => {
                           })
                         }
                         rows={3}
+                        placeholder="Movie summary..."
                       />
                     </div>
                     <div>
@@ -1571,6 +1649,7 @@ const AdminDashboard = () => {
                             duration: e.target.value,
                           })
                         }
+                        placeholder="120"
                       />
                     </div>
                     <div>
@@ -1584,6 +1663,7 @@ const AdminDashboard = () => {
                             thumbnail_url: e.target.value,
                           })
                         }
+                        placeholder="https://..."
                       />
                     </div>
                     <div>
@@ -1597,6 +1677,7 @@ const AdminDashboard = () => {
                             poster_url: e.target.value,
                           })
                         }
+                        placeholder="https://..."
                       />
                     </div>
                     <Button
@@ -1722,6 +1803,7 @@ const AdminDashboard = () => {
                   }
                   required
                   className="pr-10"
+                  placeholder="Enter current password"
                 />
                 <Button
                   type="button"
@@ -1759,6 +1841,7 @@ const AdminDashboard = () => {
                   }
                   required
                   className="pr-10"
+                  placeholder="Enter new password"
                 />
                 <Button
                   type="button"
