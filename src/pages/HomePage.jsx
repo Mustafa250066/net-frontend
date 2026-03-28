@@ -48,8 +48,21 @@ const HomePage = () => {
 
   const fetchShows = async () => {
     try {
-      const response = await axios.get(`${API}/shows`);
-      setShows(response.data);
+      // 1. Shows aur Seasons dono ko ek sath API se mangwayen
+      const [showsResponse, seasonsResponse] = await Promise.all([
+        axios.get(`${API}/shows`),
+        axios.get(`${API}/seasons`)
+      ]);
+
+      // 2. Un tamaam shows ki IDs ka ek "Set" bana lein jin ka kam az kam 1 season exist karta hai
+      const validShowIds = new Set(seasonsResponse.data.map(season => season.show_id));
+
+      // 3. Sirf un Shows ko filter kar ke rakhein jo is Set mein majood hain
+      const activeShows = showsResponse.data.filter(show => validShowIds.has(show.id));
+
+      // 4. Filtered shows ko state mein set kar dein
+      setShows(activeShows);
+      
     } catch (error) {
       console.error('Error fetching shows:', error);
       toast.error('Failed to load shows');
@@ -415,15 +428,6 @@ const HomePage = () => {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-800 bg-gradient-to-t from-black to-transparent">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="text-center text-gray-500 text-[10px] xs:text-xs sm:text-sm">
-            <p>© 2026 FlixPort. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
 
       {/* Custom CSS */}
       <style jsx>{`
