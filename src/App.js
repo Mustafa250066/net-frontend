@@ -8,6 +8,7 @@ import MovieDetailPage from './pages/MovieDetailPage';
 import VideoPlayerPage from './pages/VideoPlayerPage';
 import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from '@/components/ui/sonner';
+import Footer from './components/footer';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
@@ -49,6 +50,7 @@ function App() {
         </Routes>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
+      <Footer />
     </div>
   );
 }
