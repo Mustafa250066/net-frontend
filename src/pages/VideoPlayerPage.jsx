@@ -3,9 +3,10 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { API, getUserSession } from "../App";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, Info, PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 import VideoPlayer from "@/components/VideoPlayer";
+import formatDuration from "@/lib/formatDuration";
 
 const VideoPlayerPage = () => {
   const { episodeId } = useParams();
@@ -13,8 +14,8 @@ const VideoPlayerPage = () => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
 
-  const [episode, setEpisode] = useState(null); // for episode or movie
-  const [show, setShow] = useState(null); // show for episodes / Movie for movies
+  const [episode, setEpisode] = useState(null);
+  const [showData, setShowData] = useState(null); // Combine Show/Collection data
   const [loading, setLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -39,30 +40,56 @@ const VideoPlayerPage = () => {
         const movieRes = await axios.get(`${API}/movies/${episodeId}`);
         const movie = movieRes.data;
 
-        setEpisode({
-          id: movie.id,
-          title: movie.title,
-          description: movie.description,
-          video_url: movie.video_url,
-          episode_number: 1, // UI consistency
+        let fetchedShowName = null;
+
+        // Exactly copying logic from MovieDetailPage
+        if (movie.show_id) {
+          try {
+            const showRes = await axios.get(`${API}/shows/${movie.show_id}`);
+            fetchedShowName = showRes.data.name;
+          } catch (err) {
+            console.error("Error loading collection name:", err);
+          }
+        }
+
+        setEpisode(movie);
+        setShowData({
+          name: fetchedShowName,
+          isMovie: true,
         });
-
-        setShow({ name: "Movie" });
-
       } else {
         // ----- EPISODE MODE -----
         const episodeRes = await axios.get(`${API}/episodes/${episodeId}`);
         const ep = episodeRes.data;
-
         setEpisode(ep);
 
-        const showRes = await axios.get(`${API}/shows/${ep.show_id}`);
-        setShow(showRes.data);
+        // BUG FIX: Fetch Show and Seasons securely (Matching your app's structure)
+        try {
+          const showRes = await axios.get(`${API}/shows/${ep.show_id}`);
+          const seasonsRes = await axios.get(`${API}/seasons?show_id=${ep.show_id}`);
+          
+          // Current season ko array mein se dhoondo
+          const currentSeason = seasonsRes.data.find(s => s.id === ep.season_id);
+
+          setShowData({
+            name: showRes.data.name,
+            season_number: currentSeason ? currentSeason.season_number : "",
+            isMovie: false,
+          });
+        } catch (err) {
+          console.error("Error loading show/season details:", err);
+          // Fallback incase of API error
+          setShowData({
+            name: "TV Series",
+            season_number: "",
+            isMovie: false,
+          });
+        }
 
         // Load saved progress
         const userSession = getUserSession();
         const progressRes = await axios.get(
-          `${API}/watch-progress/${userSession}/${episodeId}`
+          `${API}/watch-progress/${userSession}/${episodeId}`,
         );
 
         if (progressRes.data.progress > 0 && videoRef.current) {
@@ -98,7 +125,6 @@ const VideoPlayerPage = () => {
   const saveProgress = async (currentTime) => {
     try {
       const userSession = getUserSession();
-
       await axios.post(`${API}/watch-progress`, {
         user_session: userSession,
         episode_id: episodeId,
@@ -111,23 +137,33 @@ const VideoPlayerPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading video...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="text-white text-lg sm:text-xl flex items-center gap-3">
+          <div className="w-6 h-6 border-4 border-[#e50914] border-t-transparent rounded-full animate-spin"></div>
+          Loading video...
+        </div>
       </div>
     );
   }
 
   if (!episode) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Video not found</div>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
+        <p className="text-white text-xl mb-4">Video not found</p>
+        <Button
+          onClick={() => navigate(-1)}
+          variant="outline"
+          className="border-gray-700 hover:bg-white hover:text-black"
+        >
+          Go Back
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* ----- OLD BUTTONS (Unchanged) ----- */}
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* ----- FLOATING BUTTONS ----- */}
       <div className="fixed top-4 left-4 z-50 flex gap-2">
         <Button
           data-testid="back-to-show-btn"
@@ -137,7 +173,7 @@ const VideoPlayerPage = () => {
               : navigate(`/show/${episode.show_id}`)
           }
           variant="ghost"
-          className="bg-black/80 backdrop-blur-sm text-white hover:bg-white hover:text-black"
+          className="bg-[#e50914] backdrop-blur-sm text-white hover:bg-[#e50914db] hover:text-white"
         >
           <ArrowLeft className="mr-2" />
           Back
@@ -155,6 +191,7 @@ const VideoPlayerPage = () => {
       </div>
 
       {/* ----- VIDEO PLAYER ----- */}
+
       <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
         <VideoPlayer
           ref={videoRef}
@@ -164,23 +201,75 @@ const VideoPlayerPage = () => {
         />
       </div>
 
-      {/* ----- INFO OVERLAY (UNTOUCHED) ----- */}
+      {/* ----- PREMIUM INFO OVERLAY ----- */}
       {showInfo && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent p-8 z-40">
-          <div className="max-w-4xl mx-auto">
-            {show && <p className="text-gray-400 text-sm mb-2 line-clamp-2 break-words">{show.name}</p>}
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent pt-32 pb-8 px-4 sm:px-8 z-40 animate-in slide-in-from-bottom-4 duration-300">
+          <div className="max-w-7xl mx-auto flex flex-col justify-end min-w-0">
+            <div className="flex flex-col max-w-3xl min-w-0">
+              {/* Top Badge (Franchise or Show Name + Season) */}
+              <div className="flex items-center gap-2 mb-2">
+                {type === "movie" ? (
+                  <span className="text-[#e50914] font-bold tracking-wider text-xs sm:text-sm uppercase drop-shadow-md line-clamp-1 break-all sm:break-words">
+                    {showData?.name ? showData.name : "Franchise Movie"}
+                  </span>
+                ) : (
+                  <span className="text-[#e50914] font-bold tracking-wider text-xs sm:text-sm uppercase drop-shadow-md line-clamp-1 break-all sm:break-words">
+                    {showData?.name} {showData?.season_number ? `- Season ${showData.season_number}` : ""}
+                  </span>
+                )}
+              </div>
 
-            <h2 className="text-3xl font-bold mb-2 line-clamp-2 break-words">{episode.title}</h2>
+              {/* Title Rendering (Movie Title OR Episode Title Matching ShowDetailPage logic) */}
+              <h2
+                className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-2 sm:mb-3 line-clamp-2 break-all sm:break-words drop-shadow-lg flex items-start sm:items-center gap-2 sm:gap-3 leading-tight"
+                style={{ fontFamily: "Space Grotesk, sans-serif" }}
+              >
+                {type === "movie" ? (
+                  episode.title
+                ) : (
+                  <>
+                    <span className="sm:hidden text-gray-400 shrink-0">
+                      {episode.episode_number}.
+                    </span>
+                    <span>
+                      {episode.title ? (episode.title.length > 20 ? `Episode ${episode.episode_number} - ${episode.title.slice(0, 50)}...` : episode.title) : `Episode ${episode.episode_number}`}
+                    </span>
+                  </>
+                )}
+              </h2>
 
-            {type !== "movie" && (
-              <p className="text-gray-300 mb-4 line-clamp-2 break-words">
-                Episode {episode.episode_number}
-              </p>
-            )}
+              {/* Meta Info Row */}
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm font-medium text-gray-300 drop-shadow-md mb-3 sm:mb-4">
+                {/* Specific Meta for Episodes */}
+                {type !== "movie" && showData?.season_number && (
+                  <span className="text-white shrink-0 font-bold bg-white/20 px-2 py-0.5 rounded backdrop-blur-sm border border-white/10">
+                    Season {showData.season_number}
+                  </span>
+                )}
 
-            {episode.description && (
-              <p className="text-gray-400 line-clamp-2 break-words">{episode.description}</p>
-            )}
+                {/* Duration */}
+                {episode.duration && (
+                  <span className="shrink-0 flex items-center gap-1 font-bold">
+                    <PlayCircle className="w-4 h-4 text-gray-400" />
+                    {type === "movie"
+                      ? formatDuration(episode.duration)
+                      : `${Math.floor(episode.duration)}m`}
+                  </span>
+                )}
+
+                {/* HD Badge */}
+                <span className="px-1.5 py-0.5 border border-gray-500 rounded text-xs text-gray-400 font-bold shrink-0">
+                  HD
+                </span>
+              </div>
+
+              {/* Description */}
+              {episode.description && (
+                <p className="text-sm sm:text-base md:text-lg text-gray-200 line-clamp-3 break-all sm:break-words leading-relaxed max-w-2xl drop-shadow-md">
+                  {episode.description}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
