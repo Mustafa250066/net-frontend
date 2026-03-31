@@ -124,7 +124,7 @@ const ShowDetailPage = () => {
         {/* Hero Content - min-w-0 lazmi hai flex items mein taake text shrink ho sakay */}
         <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-12 md:p-16 max-w-7xl mx-auto w-full z-10 pb-12 sm:pb-20">
           <div className="max-w-2xl lg:max-w-3xl space-y-4 w-full min-w-0">
-            
+
             <div className="flex items-center gap-2">
               <span className="text-[#e50914] font-bold tracking-wider text-xs sm:text-sm uppercase drop-shadow-md line-clamp-1 break-all sm:break-words">
                 Series
@@ -185,7 +185,7 @@ const ShowDetailPage = () => {
                 <SelectTrigger className="w-full sm:w-[250px] bg-[#1a1a1a] border-gray-700 text-white shrink-0 min-w-0 [&>span]:line-clamp-1 [&>span]:break-all [&>span]:whitespace-normal h-auto min-h-[40px] py-2">
                   <SelectValue placeholder="Select Season" />
                 </SelectTrigger>
-                
+
                 <SelectContent className="bg-[#1a1a1a] border-gray-700 text-white max-w-[95vw] sm:max-w-md">
                   {seasons.map((season) => (
                     // SelectItem styling: Allow wrapping and clamping
@@ -235,7 +235,9 @@ const ShowDetailPage = () => {
                         <span className="sm:hidden text-gray-400 mr-2 shrink-0">
                           {episode.episode_number}.
                         </span>
-                        {episode.title ? (episode.title.length > 20 ? `Episode ${episode.episode_number} - ${episode.title.slice(0, 50)}...` : episode.title) : `Episode ${episode.episode_number}`}
+                        {episode.title
+                          ? `Episode ${episode.episode_number} - ${episode.title.length > 20 ? episode.title.slice(0, 20) + "..." : episode.title}`
+                          : `Episode ${episode.episode_number}`}
                       </h3>
                       {episode.duration && (
                         <span className="text-gray-400 text-sm font-medium shrink-0 mt-1 sm:mt-0 whitespace-nowrap">
@@ -254,12 +256,12 @@ const ShowDetailPage = () => {
 
               {(!episodes[activeSeason] ||
                 episodes[activeSeason].length === 0) && (
-                <div className="text-center py-12 bg-[#111] rounded-lg border border-gray-800 px-4 w-full">
-                  <p className="text-gray-500 line-clamp-2 break-words">
-                    Episodes coming soon for this season.
-                  </p>
-                </div>
-              )}
+                  <div className="text-center py-12 bg-[#111] rounded-lg border border-gray-800 px-4 w-full">
+                    <p className="text-gray-500 line-clamp-2 break-words">
+                      Episodes coming soon for this season.
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
         )}
