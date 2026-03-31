@@ -236,7 +236,7 @@ const ShowDetailPage = () => {
                           {episode.episode_number}.
                         </span>
                         {episode.title
-                          ? `Episode ${episode.episode_number} - ${episode.title.length > 20 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                          ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
                           : `Episode ${episode.episode_number}`}
                       </h3>
                       {episode.duration && (

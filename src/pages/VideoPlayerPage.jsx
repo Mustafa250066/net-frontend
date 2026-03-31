@@ -67,7 +67,7 @@ const VideoPlayerPage = () => {
         try {
           const showRes = await axios.get(`${API}/shows/${ep.show_id}`);
           const seasonsRes = await axios.get(`${API}/seasons?show_id=${ep.show_id}`);
-          
+
           // Current season ko array mein se dhoondo
           const currentSeason = seasonsRes.data.find(s => s.id === ep.season_id);
 
@@ -214,7 +214,7 @@ const VideoPlayerPage = () => {
                   </span>
                 ) : (
                   <span className="text-[#e50914] font-bold tracking-wider text-xs sm:text-sm uppercase drop-shadow-md line-clamp-1 break-all sm:break-words">
-                    {showData?.name} {showData?.season_number ? `- Season ${showData.season_number}` : ""}
+                    {showData?.name}
                   </span>
                 )}
               </div>
@@ -232,7 +232,9 @@ const VideoPlayerPage = () => {
                       {episode.episode_number}.
                     </span>
                     <span>
-                      {episode.title ? (episode.title.length > 20 ? `Episode ${episode.episode_number} - ${episode.title.slice(0, 50)}...` : episode.title) : `Episode ${episode.episode_number}`}
+                      {episode.title
+                        ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                        : `Episode ${episode.episode_number}`}
                     </span>
                   </>
                 )}
