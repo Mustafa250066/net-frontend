@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import * as XLSX from 'xlsx';
 import { useNavigate } from "react-router-dom";
 import { axiosInstance, API } from "../App";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -66,7 +68,7 @@ const AdminDashboard = () => {
     const showsWithSeasons = shows.filter(show => getSeasonsByShow(show.id).length > 0);
     const totalPages = Math.ceil(showsWithSeasons.length / ITEMS_PER_PAGE) || 1;
     if (currentSeasonPage > totalPages) setCurrentSeasonPage(totalPages);
-  }, [shows, seasons, currentSeasonPage]); 
+  }, [shows, seasons, currentSeasonPage]);
 
   // 3. Episodes Page Fix
   useEffect(() => {
@@ -88,6 +90,12 @@ const AdminDashboard = () => {
   const [episodeDialog, setEpisodeDialog] = useState(false);
   const [movieDialog, setMovieDialog] = useState(false);
   const [passwordDialog, setPasswordDialog] = useState(false);
+  const [bulkDialog, setBulkDialog] = useState(false);
+  const [bulkType, setBulkType] = useState(""); // "shows", "seasons", "episodes", "movies"
+  const [bulkForm, setBulkForm] = useState({ show_id: "", season_id: "" });
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Edit states
   const [editingShow, setEditingShow] = useState(null);
@@ -624,6 +632,150 @@ const AdminDashboard = () => {
     }
   };
 
+  // ------------------------------------------
+  // BUG FIX 1: getCellValue Updated Logic
+  // This handles trailing/leading spaces from Excel center formatting
+  // ------------------------------------------
+  const getCellValue = (item, keys) => {
+    for (const key of keys) {
+      if (item[key] !== undefined && item[key] !== null) {
+        return String(item[key]).trim();
+      }
+      const foundKey = Object.keys(item).find(
+        (k) => k.trim().toLowerCase() === key.toLowerCase()
+      );
+      if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null) {
+        return String(item[foundKey]).trim();
+      }
+    }
+    return "";
+  };
+
+  const handleBulkUpload = async (e) => {
+    e.preventDefault();
+    if (!bulkFile) {
+      toast.error("Please select an Excel file");
+      return;
+    }
+
+    setBulkLoading(true);
+    setUploadProgress(0);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (data.length === 0) {
+          toast.error("Excel file is empty");
+          setBulkLoading(false);
+          return;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          try {
+            if (bulkType === "shows") {
+              const showData = {
+                name: getCellValue(item, ['name', 'title', 'show name', 'show_name']),
+                description: getCellValue(item, ['description', 'summary', 'desc']),
+                poster_url: getCellValue(item, ['poster_url', 'poster', 'image', 'url']),
+              };
+              if (!showData.name) {
+                console.log("Row Skipped - Name not found in row:", item);
+                continue;
+              }
+              await axiosInstance.post("/shows", showData);
+            } else if (bulkType === "seasons") {
+              const seasonNumberStr = getCellValue(item, ['season_number', 'season', 'number']);
+              const seasonNumber = parseInt(seasonNumberStr);
+              if (isNaN(seasonNumber)) continue;
+
+              const duplicate = seasons.find(s => s.show_id === bulkForm.show_id && s.season_number === seasonNumber);
+              if (duplicate) continue;
+
+              await axiosInstance.post("/seasons", {
+                show_id: bulkForm.show_id,
+                season_number: seasonNumber,
+                name: getCellValue(item, ['name', 'title']),
+              });
+            } else if (bulkType === "episodes") {
+              const epNumberStr = getCellValue(item, ['episode_number', 'episode', 'number']);
+              const epNumber = parseInt(epNumberStr);
+              const videoUrl = getCellValue(item, ['video_url', 'url', 'video', 'link']);
+              if (isNaN(epNumber) || !videoUrl) continue;
+
+              const duplicate = episodes.find(e => e.season_id === bulkForm.season_id && e.episode_number === epNumber);
+              if (duplicate) continue;
+
+              await axiosInstance.post("/episodes", {
+                show_id: bulkForm.show_id,
+                season_id: bulkForm.season_id,
+                episode_number: epNumber,
+                title: getCellValue(item, ['title', 'name']),
+                description: getCellValue(item, ['description', 'summary', 'desc']),
+                video_url: videoUrl,
+                duration: parseInt(getCellValue(item, ['duration', 'time', 'length'])) || null,
+                thumbnail_url: getCellValue(item, ['thumbnail_url', 'thumbnail', 'thumb']),
+              });
+            } else if (bulkType === "movies") {
+              const title = getCellValue(item, ['title', 'name']);
+              const videoUrl = getCellValue(item, ['video_url', 'url', 'video', 'link']);
+              if (!title || !videoUrl) continue;
+              await axiosInstance.post("/movies", {
+                show_id: bulkForm.show_id === "none" ? "" : bulkForm.show_id,
+                title: title,
+                description: getCellValue(item, ['description', 'summary', 'desc']),
+                video_url: videoUrl,
+                duration: parseInt(getCellValue(item, ['duration', 'time', 'length'])) || null,
+                thumbnail_url: getCellValue(item, ['thumbnail_url', 'thumbnail', 'thumb']),
+                poster_url: getCellValue(item, ['poster_url', 'poster', 'image']),
+              });
+            }
+            successCount++;
+          } catch (err) {
+            console.error("Failed to save item:", item);
+            console.error("Error Details:", err.response?.data || err.message);
+            errorCount++;
+          }
+          setUploadProgress(Math.round(((i + 1) / data.length) * 100));
+        }
+
+        toast.success(`Bulk upload completed! Success: ${successCount}, Errors/Duplicates: ${errorCount}`);
+        setTimeout(() => {
+          handleCloseBulkDialog();
+          fetchAllData();
+        }, 500);
+      } catch (error) {
+        toast.error("Failed to parse Excel file");
+      } finally {
+        setBulkLoading(false);
+      }
+    };
+    reader.readAsBinaryString(bulkFile);
+  };
+
+  const handleCloseBulkDialog = () => {
+    setBulkDialog(false);
+    setBulkType("");
+    setBulkForm({ show_id: "", season_id: "" });
+    setBulkFile(null);
+    setBulkLoading(false);
+    setUploadProgress(0);
+  };
+
+  const handleOpenBulkDialog = (type) => {
+    setBulkType(type);
+    setBulkDialog(true);
+    setUploadProgress(0);
+  };
+
   // Filter seasons by show
   const getSeasonsByShow = (showId) => {
     return seasons.filter((s) => s.show_id === showId);
@@ -640,10 +792,10 @@ const AdminDashboard = () => {
   const renderPaginationItems = (currentPage, totalPages, setPage) => {
     const items = [];
     const maxVisible = 5;
-    
+
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
+
     if (endPage - startPage + 1 < maxVisible) {
       startPage = Math.max(1, endPage - maxVisible + 1);
     }
@@ -651,11 +803,11 @@ const AdminDashboard = () => {
     for (let i = startPage; i <= endPage; i++) {
       items.push(
         <PaginationItem key={i}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => {
               setPage(i);
               window.scrollTo({ top: 0, behavior: 'smooth' });
-            }} 
+            }}
             isActive={currentPage === i}
             className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"
           >
@@ -717,25 +869,25 @@ const AdminDashboard = () => {
                     className="mt-1 pr-10"
                     placeholder="Admin password"
                   />
-                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                >
-                  {showPassword ? (
-                    <EyeOff
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Eye
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  )}
-                </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeOff
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Eye
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -777,7 +929,7 @@ const AdminDashboard = () => {
             >
               Admin Dashboard
             </h1>
-            
+
             {/* Desktop Menu */}
             <div className="hidden md:flex gap-2">
               <Button
@@ -903,14 +1055,23 @@ const AdminDashboard = () => {
                   else setShowDialog(true);
                 }}
               >
-                <DialogTrigger asChild>
+                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                  <DialogTrigger asChild>
+                    <Button
+                      data-testid="add-show-btn"
+                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Add Show
+                    </Button>
+                  </DialogTrigger>
                   <Button
-                    data-testid="add-show-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
+                    onClick={() => handleOpenBulkDialog("shows")}
+                    variant="ghost"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
-                    <Plus className="mr-2 h-4 w-4" /> Add Show
+                    Bulk Upload
                   </Button>
-                </DialogTrigger>
+                </div>
                 <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
                   <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl">
@@ -1052,7 +1213,7 @@ const AdminDashboard = () => {
                 <Pagination>
                   <PaginationContent className="flex-wrap justify-center">
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <PaginationPrevious
                         onClick={() => {
                           setCurrentShowPage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1062,7 +1223,7 @@ const AdminDashboard = () => {
                     </PaginationItem>
                     {renderPaginationItems(currentShowPage, Math.ceil(shows.length / ITEMS_PER_PAGE), setCurrentShowPage)}
                     <PaginationItem>
-                      <PaginationNext 
+                      <PaginationNext
                         onClick={() => {
                           setCurrentShowPage(prev => Math.min(Math.ceil(shows.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1084,192 +1245,198 @@ const AdminDashboard = () => {
 
           {/* Seasons Tab */}
           <TabsContent value="seasons" className="mt-4 sm:mt-6">
-  {(() => {
-    // BUG FIX: Sirf un shows ko filter karein jin ke andar seasons mojud hain
-    const showsWithSeasons = shows.filter((show) => getSeasonsByShow(show.id).length > 0);
-    const totalSeasonPages = Math.ceil(showsWithSeasons.length / ITEMS_PER_PAGE);
+            {(() => {
+              const showsWithSeasons = shows.filter((show) => getSeasonsByShow(show.id).length > 0);
+              const totalSeasonPages = Math.ceil(showsWithSeasons.length / ITEMS_PER_PAGE);
 
-    return (
-      <>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
-          <Dialog
-            open={seasonDialog}
-            onOpenChange={(open) => {
-              if (!open) handleCloseSeasonDialog();
-              else setSeasonDialog(true);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button
-                data-testid="add-season-btn"
-                className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Season
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
-              <DialogHeader>
-                <DialogTitle className="text-lg sm:text-xl">
-                  {editingSeason ? "Edit Season" : "Add New Season"}
-                </DialogTitle>
-              </DialogHeader>
-              <form
-                onSubmit={
-                  editingSeason ? handleUpdateSeason : handleCreateSeason
-                }
-                className="space-y-4"
-              >
-                <div>
-                  <Label>Select Show *</Label>
-                  <Select
-                    value={seasonForm.show_id}
-                    onValueChange={(value) =>
-                      setSeasonForm({ ...seasonForm, show_id: value })
-                    }
-                    required
-                  >
-                    <SelectTrigger data-testid="season-show-select" className="w-full">
-                      <SelectValue placeholder="Select a show" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shows.map((show) => (
-                        <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
-                          {truncateText(show.name, 40)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Season Number *</Label>
-                  <Input
-                    data-testid="season-number-input"
-                    type="number"
-                    value={seasonForm.season_number}
-                    onChange={(e) =>
-                      setSeasonForm({
-                        ...seasonForm,
-                        season_number: e.target.value,
-                      })
-                    }
-                    required
-                    placeholder="1, 2, 3..."
-                  />
-                </div>
-                <div>
-                  <Label>Season Name (Optional)</Label>
-                  <Input
-                    data-testid="season-name-input"
-                    value={seasonForm.name}
-                    onChange={(e) =>
-                      setSeasonForm({ ...seasonForm, name: e.target.value })
-                    }
-                    placeholder="E.g. Season 1: The Beginning"
-                  />
-                </div>
-                <Button
-                  data-testid="create-season-btn"
-                  type="submit"
-                  className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                >
-                  {editingSeason ? "Update Season" : "Create Season"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-3 sm:space-y-4">
-            {showsWithSeasons.length === 0 ? (
-              <div className="text-center py-8 sm:py-12">
-                <p className="text-gray-400">No seasons found. Click "Add Season" to create one.</p>
-              </div>
-            ) : (
-              showsWithSeasons
-                .slice((currentSeasonPage - 1) * ITEMS_PER_PAGE, currentSeasonPage * ITEMS_PER_PAGE)
-                .map((show) => {
-                  const showSeasons = getSeasonsByShow(show.id);
-                  // "if (showSeasons.length === 0) return null" hata diya hai kyunke ab list filtered hai
-                  return (
-                    <div
-                      key={show.id}
-                      className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+              return (
+                <>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
+                    <Dialog
+                      open={seasonDialog}
+                      onOpenChange={(open) => {
+                        if (!open) handleCloseSeasonDialog();
+                        else setSeasonDialog(true);
+                      }}
                     >
-                      <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
-                        {show.name}
-                      </h3>
-                      <div className="space-y-2">
-                        {showSeasons.map((season) => (
-                          <div
-                            key={season.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
+                      <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                        <DialogTrigger asChild>
+                          <Button
+                            data-testid="add-season-btn"
+                            className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
                           >
-                            <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
-                              Season {season.season_number}
-                              {season.name && ` - ${truncateText(season.name, 30)}`}
-                            </span>
-                            <div className="flex gap-2 flex-shrink-0 justify-end">
-                              <Button
-                                data-testid={`edit-season-${season.id}`}
-                                onClick={() => handleEditSeason(season)}
-                                variant="outline"
-                                size="sm"
-                                className="h-8 sm:h-9"
-                              >
-                                <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </Button>
-                              <Button
-                                data-testid={`delete-season-${season.id}`}
-                                onClick={() => handleDeleteSeason(season.id)}
-                                variant="destructive"
-                                size="sm"
-                                className="h-8 sm:h-9"
-                              >
-                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                            <Plus className="mr-2 h-4 w-4" /> Add Season
+                          </Button>
+                        </DialogTrigger>
+                        <Button
+                          onClick={() => handleOpenBulkDialog("seasons")}
+                          variant="ghost"
+                          className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                        >
+                          Bulk Upload
+                        </Button>
                       </div>
-                    </div>
-                  );
-                })
-            )}
-          </div>
+                      <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+                        <DialogHeader>
+                          <DialogTitle className="text-lg sm:text-xl">
+                            {editingSeason ? "Edit Season" : "Add New Season"}
+                          </DialogTitle>
+                        </DialogHeader>
+                        <form
+                          onSubmit={
+                            editingSeason ? handleUpdateSeason : handleCreateSeason
+                          }
+                          className="space-y-4"
+                        >
+                          <div>
+                            <Label>Select Show *</Label>
+                            <Select
+                              value={seasonForm.show_id}
+                              onValueChange={(value) =>
+                                setSeasonForm({ ...seasonForm, show_id: value })
+                              }
+                              required
+                            >
+                              <SelectTrigger data-testid="season-show-select" className="w-full">
+                                <SelectValue placeholder="Select a show" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {shows.map((show) => (
+                                  <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                                    {truncateText(show.name, 40)}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Season Number *</Label>
+                            <Input
+                              data-testid="season-number-input"
+                              type="number"
+                              value={seasonForm.season_number}
+                              onChange={(e) =>
+                                setSeasonForm({
+                                  ...seasonForm,
+                                  season_number: e.target.value,
+                                })
+                              }
+                              required
+                              placeholder="1, 2, 3..."
+                            />
+                          </div>
+                          <div>
+                            <Label>Season Name (Optional)</Label>
+                            <Input
+                              data-testid="season-name-input"
+                              value={seasonForm.name}
+                              onChange={(e) =>
+                                setSeasonForm({ ...seasonForm, name: e.target.value })
+                              }
+                              placeholder="E.g. Season 1: The Beginning"
+                            />
+                          </div>
+                          <Button
+                            data-testid="create-season-btn"
+                            type="submit"
+                            className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                          >
+                            {editingSeason ? "Update Season" : "Create Season"}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
 
-          {/* Pagination ab updated variables (totalSeasonPages) ke hisab se chalegi */}
-          {totalSeasonPages > 1 && (
-            <Pagination>
-              <PaginationContent className="flex-wrap justify-center">
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => {
-                      setCurrentSeasonPage(prev => Math.max(1, prev - 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
-                  />
-                </PaginationItem>
-                {renderPaginationItems(currentSeasonPage, totalSeasonPages, setCurrentSeasonPage)}
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => {
-                      setCurrentSeasonPage(prev => Math.min(totalSeasonPages, prev + 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className={currentSeasonPage === totalSeasonPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </div>
-      </>
-    );
-  })()}
-</TabsContent>
+                  <div className="space-y-6">
+                    <div className="space-y-3 sm:space-y-4">
+                      {showsWithSeasons.length === 0 ? (
+                        <div className="text-center py-8 sm:py-12">
+                          <p className="text-gray-400">No seasons found. Click "Add Season" to create one.</p>
+                        </div>
+                      ) : (
+                        showsWithSeasons
+                          .slice((currentSeasonPage - 1) * ITEMS_PER_PAGE, currentSeasonPage * ITEMS_PER_PAGE)
+                          .map((show) => {
+                            const showSeasons = getSeasonsByShow(show.id);
+                            return (
+                              <div
+                                key={show.id}
+                                className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                              >
+                                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
+                                  {show.name}
+                                </h3>
+                                <div className="space-y-2">
+                                  {showSeasons.map((season) => (
+                                    <div
+                                      key={season.id}
+                                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
+                                    >
+                                      <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                                        Season {season.season_number}
+                                        {season.name && ` - ${truncateText(season.name, 30)}`}
+                                      </span>
+                                      <div className="flex gap-2 flex-shrink-0 justify-end">
+                                        <Button
+                                          data-testid={`edit-season-${season.id}`}
+                                          onClick={() => handleEditSeason(season)}
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-8 sm:h-9"
+                                        >
+                                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        </Button>
+                                        <Button
+                                          data-testid={`delete-season-${season.id}`}
+                                          onClick={() => handleDeleteSeason(season.id)}
+                                          variant="destructive"
+                                          size="sm"
+                                          className="h-8 sm:h-9"
+                                        >
+                                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
+
+                    {totalSeasonPages > 1 && (
+                      <Pagination>
+                        <PaginationContent className="flex-wrap justify-center">
+                          <PaginationItem>
+                            <PaginationPrevious
+                              onClick={() => {
+                                setCurrentSeasonPage(prev => Math.max(1, prev - 1));
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                            />
+                          </PaginationItem>
+                          {renderPaginationItems(currentSeasonPage, totalSeasonPages, setCurrentSeasonPage)}
+                          <PaginationItem>
+                            <PaginationNext
+                              onClick={() => {
+                                setCurrentSeasonPage(prev => Math.min(totalSeasonPages, prev + 1));
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className={currentSeasonPage === totalSeasonPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </TabsContent>
 
           {/* Episodes Tab */}
           <TabsContent value="episodes" className="mt-4 sm:mt-6">
@@ -1282,14 +1449,23 @@ const AdminDashboard = () => {
                   else setEpisodeDialog(true);
                 }}
               >
-                <DialogTrigger asChild>
+                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                  <DialogTrigger asChild>
+                    <Button
+                      data-testid="add-episode-btn"
+                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Add Episode
+                    </Button>
+                  </DialogTrigger>
                   <Button
-                    data-testid="add-episode-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
+                    onClick={() => handleOpenBulkDialog("episodes")}
+                    variant="ghost"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
-                    <Plus className="mr-2 h-4 w-4" /> Add Episode
+                    Bulk Upload
                   </Button>
-                </DialogTrigger>
+                </div>
                 <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
                   <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl">
@@ -1517,7 +1693,7 @@ const AdminDashboard = () => {
                 <Pagination>
                   <PaginationContent className="flex-wrap justify-center">
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <PaginationPrevious
                         onClick={() => {
                           setCurrentEpisodePage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1527,7 +1703,7 @@ const AdminDashboard = () => {
                     </PaginationItem>
                     {renderPaginationItems(currentEpisodePage, Math.ceil(episodes.length / ITEMS_PER_PAGE), setCurrentEpisodePage)}
                     <PaginationItem>
-                      <PaginationNext 
+                      <PaginationNext
                         onClick={() => {
                           setCurrentEpisodePage(prev => Math.min(Math.ceil(episodes.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1552,14 +1728,23 @@ const AdminDashboard = () => {
                   else setMovieDialog(true);
                 }}
               >
-                <DialogTrigger asChild>
+                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                  <DialogTrigger asChild>
+                    <Button
+                      data-testid="add-movie-btn"
+                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Add Movie
+                    </Button>
+                  </DialogTrigger>
                   <Button
-                    data-testid="add-movie-btn"
-                    className="bg-[#e50914] hover:bg-[#f40612] w-full sm:w-auto"
+                    onClick={() => handleOpenBulkDialog("movies")}
+                    variant="ghost"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
-                    <Plus className="mr-2 h-4 w-4" /> Add Movie
+                    Bulk Upload
                   </Button>
-                </DialogTrigger>
+                </div>
                 <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
                   <DialogHeader>
                     <DialogTitle className="text-lg sm:text-xl">
@@ -1755,7 +1940,7 @@ const AdminDashboard = () => {
                 <Pagination>
                   <PaginationContent className="flex-wrap justify-center">
                     <PaginationItem>
-                      <PaginationPrevious 
+                      <PaginationPrevious
                         onClick={() => {
                           setCurrentMoviePage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1765,7 +1950,7 @@ const AdminDashboard = () => {
                     </PaginationItem>
                     {renderPaginationItems(currentMoviePage, Math.ceil(movies.length / ITEMS_PER_PAGE), setCurrentMoviePage)}
                     <PaginationItem>
-                      <PaginationNext 
+                      <PaginationNext
                         onClick={() => {
                           setCurrentMoviePage(prev => Math.min(Math.ceil(movies.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1870,6 +2055,173 @@ const AdminDashboard = () => {
               className="w-full bg-[#e50914] hover:bg-[#f40612]"
             >
               Change Password
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Upload Dialog */}
+      <Dialog open={bulkDialog} onOpenChange={(open) => !open && handleCloseBulkDialog()}>
+        <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg shadow-2xl">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-xl font-bold text-[#e50914] capitalize">
+              Bulk Upload {bulkType}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleBulkUpload} className="space-y-6">
+            {bulkType === "seasons" && (
+              <div className="space-y-2">
+                <Label className="text-gray-300">Select Show *</Label>
+                <Select
+                  value={bulkForm.show_id}
+                  onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value })}
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a show" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shows.map((show) => (
+                      <SelectItem key={show.id} value={show.id}>
+                        {show.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {bulkType === "episodes" && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Select Show *</Label>
+                  <Select
+                    value={bulkForm.show_id}
+                    onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value, season_id: "" })}
+                    required
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a show" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shows.map((show) => (
+                        <SelectItem key={show.id} value={show.id}>
+                          {show.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Select Season *</Label>
+                  <Select
+                    value={bulkForm.season_id}
+                    onValueChange={(value) => setBulkForm({ ...bulkForm, season_id: value })}
+                    required
+                    disabled={!bulkForm.show_id}
+                  >
+                    <SelectTrigger className="w-full disabled:opacity-50">
+                      <SelectValue placeholder="Select a season" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getSeasonsByShow(bulkForm.show_id).map((season) => (
+                        <SelectItem key={season.id} value={season.id}>
+                          Season {season.season_number} {season.name && `- ${season.name}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            {bulkType === "movies" && (
+              <div className="space-y-2">
+                <Label className="text-gray-300">Select Show (Optional)</Label>
+                <Select
+                  value={bulkForm.show_id || "none"}
+                  onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a show or Single Movie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Single Movie</SelectItem>
+                    {shows.map((show) => (
+                      <SelectItem key={show.id} value={show.id}>
+                        {show.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <Label className="text-gray-300">Select Excel File *</Label>
+                {bulkLoading && <span className="text-xs font-medium text-[#e50914] animate-pulse">{uploadProgress}% Complete</span>}
+              </div>
+              <Input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={(e) => setBulkFile(e.target.files[0])}
+                required
+                disabled={bulkLoading}
+                className="mt-1 h-auto p-1.5 bg-[#2a2a2a] border-gray-700 text-gray-300 file:bg-[#3d3d3d] file:text-white file:border-0 file:rounded-md file:px-4 file:py-1.5 file:mr-4 file:cursor-pointer hover:file:bg-[#4d4d4d] transition-all disabled:opacity-50"
+              />
+
+              {bulkLoading && (
+                <div className="space-y-2 pt-2">
+                  <Progress value={uploadProgress} className="h-2 bg-gray-800" />
+                </div>
+              )}
+
+              <div className="bg-[#2a2a2a]/50 p-4 rounded-md border border-gray-800 mt-2">
+                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">Required Columns (Flexible Matching):</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {bulkType === "shows" && (
+                    <>
+                      <div className="text-[11px] text-gray-400 text-left">• name / title</div>
+                      <div className="text-[11px] text-gray-400 text-left">• description</div>
+                      <div className="text-[11px] text-gray-400 text-left col-span-2">• poster_url</div>
+                    </>
+                  )}
+                  {bulkType === "seasons" && (
+                    <>
+                      <div className="text-[11px] text-gray-400 text-left">• season_number</div>
+                      <div className="text-[11px] text-gray-400 text-left">• name / title</div>
+                    </>
+                  )}
+                  {bulkType === "episodes" && (
+                    <>
+                      <div className="text-[11px] text-gray-400 text-left">• episode_number</div>
+                      <div className="text-[11px] text-gray-400 text-left">• title / name</div>
+                      <div className="text-[11px] text-gray-400 text-left">• video_url</div>
+                      <div className="text-[11px] text-gray-400 text-left">• duration</div>
+                    </>
+                  )}
+                  {bulkType === "movies" && (
+                    <>
+                      <div className="text-[11px] text-gray-400 text-left">• title / name</div>
+                      <div className="text-[11px] text-gray-400 text-left">• video_url</div>
+                      <div className="text-[11px] text-gray-400 text-left">• poster_url</div>
+                      <div className="text-[11px] text-gray-400 text-left">• duration</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Button
+              type="submit"
+              className="w-full bg-[#e50914] hover:bg-[#b00710] text-white font-bold h-12 rounded-md shadow-lg transition-all active:scale-[0.98]"
+              disabled={bulkLoading}
+            >
+              {bulkLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Processing...</span>
+                </div>
+              ) : (
+                "Upload & Save"
+              )}
             </Button>
           </form>
         </DialogContent>

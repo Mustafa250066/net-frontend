@@ -83,7 +83,7 @@ const MovieDetailPage = () => {
         {(movie.poster_url || movie.thumbnail_url) && (
           <div className="absolute inset-0">
             <img
-              src={convertToDirectUrl(movie.poster_url || movie.thumbnail_url)}
+              src={convertToDirectUrl(movie.thumbnail_url || movie.poster_url)}
               alt={getShortAlt(movie.title)}
               className="w-full h-full object-cover opacity-80"
             />
