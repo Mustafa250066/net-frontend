@@ -12,6 +12,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import convertToDirectUrl from "@/lib/convert";
 import getShortAlt from "@/lib/fallback";
 import formatDuration from "@/lib/formatDuration";
@@ -25,10 +33,16 @@ const ShowDetailPage = () => {
   const [loading, setLoading] = useState(true);
 
   const [activeSeason, setActiveSeason] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const EPISODES_PER_PAGE = 10;
 
   useEffect(() => {
     fetchShowDetails();
   }, [showId]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeSeason]);
 
   const fetchShowDetails = async () => {
     try {
@@ -199,60 +213,134 @@ const ShowDetailPage = () => {
               </Select>
             </div>
 
-            {/* Episode List for Active Season */}
+            {/* Episode List for Active Season with Pagination */}
             <div className="flex flex-col gap-4 w-full min-w-0">
-              {episodes[activeSeason]?.map((episode, index) => (
-                <div
-                  key={episode.id}
-                  onClick={() => navigate(`/watch/${episode.id}`)}
-                  className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 border-b border-gray-800 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group w-full min-w-0 overflow-hidden"
-                >
+              {(() => {
+                const seasonEpisodes = episodes[activeSeason] || [];
+                const startIndex = (currentPage - 1) * EPISODES_PER_PAGE;
+                const endIndex = startIndex + EPISODES_PER_PAGE;
+                const paginatedEpisodes = seasonEpisodes.slice(startIndex, endIndex);
+                const totalPages = Math.ceil(seasonEpisodes.length / EPISODES_PER_PAGE);
 
-                  {/* Thumbnail */}
-                  <div className="relative w-full sm:w-40 md:w-48 aspect-video rounded-md overflow-hidden shrink-0 bg-gray-900">
-                    {episode.thumbnail_url ? (
-                      <img
-                        src={convertToDirectUrl(episode.thumbnail_url)}
-                        alt={`Episode ${episode.episode_number}`}
-                        className="w-full h-full object-cover group-hover:opacity-70 transition-opacity"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                        <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                return (
+                  <>
+                    {paginatedEpisodes.map((episode) => (
+                      <div
+                        key={episode.id}
+                        onClick={() => navigate(`/watch/${episode.id}`)}
+                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 border-b border-gray-800 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group w-full min-w-0 overflow-hidden"
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative w-full sm:w-40 md:w-48 aspect-video rounded-md overflow-hidden shrink-0 bg-gray-900">
+                          {episode.thumbnail_url ? (
+                            <img
+                              src={convertToDirectUrl(episode.thumbnail_url)}
+                              alt={`Episode ${episode.episode_number}`}
+                              className="w-full h-full object-cover group-hover:opacity-70 transition-opacity"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="bg-black/50 p-2 rounded-full border border-white">
+                              <Play className="w-6 h-6 text-white fill-white shrink-0" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Info (Title, Desc) */}
+                        <div className="flex-1 min-w-0 w-full overflow-hidden">
+                          <div className="flex justify-between items-start gap-2 mb-1 w-full min-w-0">
+                            <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 break-all sm:break-words flex-1 min-w-0">
+                              {episode.title
+                                ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                                : `Episode ${episode.episode_number}`}
+                            </h3>
+                            {episode.duration && (
+                              <span className="text-gray-400 text-sm font-medium shrink-0 mt-1 sm:mt-0 whitespace-nowrap">
+                                {Math.floor(episode.duration)}m
+                              </span>
+                            )}
+                          </div>
+                          {episode.description && (
+                            <p className="text-gray-400 text-sm sm:text-base line-clamp-3 sm:line-clamp-2 break-all sm:break-words leading-relaxed w-full">
+                              {episode.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="mt-8 mb-4">
+                        <Pagination>
+                          <PaginationContent className="flex-wrap justify-center border-gray-800">
+                            <PaginationItem>
+                              <PaginationPrevious
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (currentPage > 1) {
+                                    setCurrentPage(currentPage - 1);
+                                    window.scrollTo({ top: 600, behavior: 'smooth' });
+                                  }
+                                }}
+                                className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors"}
+                              />
+                            </PaginationItem>
+
+                            {/* Render numeric page links */}
+                            {(() => {
+                              const pageLinks = [];
+                              const maxVisible = 5;
+                              let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                              let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+                              if (endPage - startPage + 1 < maxVisible) {
+                                startPage = Math.max(1, endPage - maxVisible + 1);
+                              }
+
+                              for (let i = startPage; i <= endPage; i++) {
+                                pageLinks.push(
+                                  <PaginationItem key={i}>
+                                    <PaginationLink
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setCurrentPage(i);
+                                        window.scrollTo({ top: 600, behavior: 'smooth' });
+                                      }}
+                                      isActive={currentPage === i}
+                                      className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-800"
+                                    >
+                                      {i}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                );
+                              }
+                              return pageLinks;
+                            })()}
+
+                            <PaginationItem>
+                              <PaginationNext
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (currentPage < totalPages) {
+                                    setCurrentPage(currentPage + 1);
+                                    window.scrollTo({ top: 600, behavior: 'smooth' });
+                                  }
+                                }}
+                                className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors"}
+                              />
+                            </PaginationItem>
+                          </PaginationContent>
+                        </Pagination>
                       </div>
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-black/50 p-2 rounded-full border border-white">
-                        <Play className="w-6 h-6 text-white fill-white shrink-0" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Info (Title, Desc) */}
-                  <div className="flex-1 min-w-0 w-full overflow-hidden">
-                    <div className="flex justify-between items-start gap-2 mb-1 w-full min-w-0">
-                      <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 break-all sm:break-words flex-1 min-w-0">
-                        <span className="sm:hidden text-gray-400 mr-2 shrink-0">
-                          {episode.episode_number}.
-                        </span>
-                        {episode.title
-                          ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
-                          : `Episode ${episode.episode_number}`}
-                      </h3>
-                      {episode.duration && (
-                        <span className="text-gray-400 text-sm font-medium shrink-0 mt-1 sm:mt-0 whitespace-nowrap">
-                          {Math.floor(episode.duration)}m
-                        </span>
-                      )}
-                    </div>
-                    {episode.description && (
-                      <p className="text-gray-400 text-sm sm:text-base line-clamp-3 sm:line-clamp-2 break-all sm:break-words leading-relaxed w-full">
-                        {episode.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                  </>
+                );
+              })()}
 
               {(!episodes[activeSeason] ||
                 episodes[activeSeason].length === 0) && (
