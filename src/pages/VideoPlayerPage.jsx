@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 import { API, getUserSession } from "../App";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Info, PlayCircle } from "lucide-react";
+import { ArrowLeft, Info, PlayCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import VideoPlayer from "@/components/VideoPlayer";
 import formatDuration from "@/lib/formatDuration";
@@ -18,6 +18,7 @@ const VideoPlayerPage = () => {
   const [showData, setShowData] = useState(null); // Combine Show/Collection data
   const [loading, setLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
+  const [seasonEpisodes, setSeasonEpisodes] = useState([]);
 
   const progressInterval = useRef(null);
 
@@ -26,6 +27,7 @@ const VideoPlayerPage = () => {
   const type = searchParams.get("type"); // "movie" or null
 
   useEffect(() => {
+    setLoading(true);
     fetchDetails();
 
     return () => {
@@ -62,6 +64,15 @@ const VideoPlayerPage = () => {
         const episodeRes = await axios.get(`${API}/episodes/${episodeId}`);
         const ep = episodeRes.data;
         setEpisode(ep);
+
+        // Fetch Season Episodes for prev/next navigation
+        try {
+          const episodesRes = await axios.get(`${API}/episodes?season_id=${ep.season_id}`);
+          const sortedEps = episodesRes.data.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+          setSeasonEpisodes(sortedEps);
+        } catch (err) {
+          console.error("Error loading season episodes:", err);
+        }
 
         // BUG FIX: Fetch Show and Seasons securely (Matching your app's structure)
         try {
@@ -192,13 +203,98 @@ const VideoPlayerPage = () => {
 
       {/* ----- VIDEO PLAYER ----- */}
 
+      <h2
+          className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-2 sm:mb-3 line-clamp-2 break-all sm:break-words drop-shadow-lg flex items-start sm:items-center gap-2 sm:gap-3 leading-tight mt-20 ml-4"
+          style={{ fontFamily: "Space Grotesk, sans-serif" }}
+        >
+          {type === "movie" ? (
+            episode.title
+          ) : (
+            <>
+              <span>
+                {episode.title
+                  ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                  : `Episode ${episode.episode_number}`}
+              </span>
+            </>
+          )}
+        </h2>
+
       <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
         <VideoPlayer
+          key={episodeId}
           ref={videoRef}
           url={episode.video_url}
           onPlay={handleVideoPlay}
           onPause={handleVideoPause}
         />
+
+        {/* Navigation Buttons */}
+        {type !== "movie" && seasonEpisodes.length > 1 && (
+          <div className="flex flex-row justify-between items-center gap-4 mt-8 sm:mt-12 px-2 sm:px-0">
+            {/* Previous Button Container */}
+            <div className="flex-1 flex justify-start">
+              {(() => {
+                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episodeId?.toString());
+                const prevEp = currentIndex > 0 ? seasonEpisodes[currentIndex - 1] : null;
+                if (prevEp) {
+                  return (
+                    <Button
+                      onClick={() => {
+                        navigate(`/watch/${prevEp.id}`);
+                        window.scrollTo(0, 0);
+                      }}
+                      variant="ghost"
+                      className="group flex items-center gap-2 sm:gap-4 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-white/20 transition-all duration-300 px-3 sm:px-6 h-12 sm:h-16 rounded-xl sm:rounded-2xl min-w-0 max-w-full sm:max-w-[300px]"
+                    >
+                      <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 group-hover:-translate-x-1 transition-transform shrink-0" />
+                      <div className="text-left min-w-0 overflow-hidden hidden xs:block">
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-gray-500 group-hover:text-[#e50914] transition-colors leading-none mb-1 truncate">Previous</p>
+                        <p className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                          {prevEp.episode_number}. {prevEp.title || `Episode ${prevEp.episode_number}`}
+                        </p>
+                      </div>
+                      {/* Mobile Label */}
+                      <span className="xs:hidden text-xs font-bold uppercase tracking-widest">Prev</span>
+                    </Button>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+
+            {/* Next Button Container */}
+            <div className="flex-1 flex justify-end">
+              {(() => {
+                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episodeId?.toString());
+                const nextEp = currentIndex !== -1 && currentIndex < seasonEpisodes.length - 1 ? seasonEpisodes[currentIndex + 1] : null;
+                if (nextEp) {
+                  return (
+                    <Button
+                      onClick={() => {
+                        navigate(`/watch/${nextEp.id}`);
+                        window.scrollTo(0, 0);
+                      }}
+                      variant="ghost"
+                      className="group flex items-center justify-end gap-2 sm:gap-4 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 hover:border-white/20 transition-all duration-300 px-3 sm:px-6 h-12 sm:h-16 rounded-xl sm:rounded-2xl min-w-0 max-w-full sm:max-w-[300px]"
+                    >
+                      <div className="text-right min-w-0 overflow-hidden hidden xs:block">
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-wider font-bold text-gray-500 group-hover:text-[#e50914] transition-colors leading-none mb-1 truncate">Next Episode</p>
+                        <p className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                          {nextEp.episode_number}. {nextEp.title || `Episode ${nextEp.episode_number}`}
+                        </p>
+                      </div>
+                      {/* Mobile Label */}
+                      <span className="xs:hidden text-xs font-bold uppercase tracking-widest">Next</span>
+                      <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform shrink-0" />
+                    </Button>
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ----- PREMIUM INFO OVERLAY ----- */}
@@ -228,9 +324,6 @@ const VideoPlayerPage = () => {
                   episode.title
                 ) : (
                   <>
-                    <span className="sm:hidden text-gray-400 shrink-0">
-                      {episode.episode_number}.
-                    </span>
                     <span>
                       {episode.title
                         ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
