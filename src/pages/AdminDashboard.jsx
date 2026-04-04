@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -23,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2 } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
 import {
@@ -105,6 +106,8 @@ const AdminDashboard = () => {
   const [selectedSeasons, setSelectedSeasons] = useState([]);
   const [selectedEpisodes, setSelectedEpisodes] = useState([]);
   const [selectedMovies, setSelectedMovies] = useState([]);
+  const [bulkReport, setBulkReport] = useState(null);
+  const [reportDialog, setReportDialog] = useState(false);
 
   // Forms
   const [showForm, setShowForm] = useState({
@@ -208,11 +211,26 @@ const AdminDashboard = () => {
     try {
       await axiosInstance.post("/shows", showForm);
       toast.success("Show created successfully");
+      const report = {
+        type: "shows",
+        counts: { success: 1, duplicate: 0, error: 0 },
+        items: [{ row: 1, name: showForm.name, status: "Success" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       setShowDialog(false);
       setShowForm({ name: "", description: "", poster_url: "" });
       fetchAllData();
     } catch (error) {
+      const msg = error.response?.data?.detail || "Server error";
       toast.error("Failed to create show");
+      const report = {
+        type: "shows",
+        counts: { success: 0, duplicate: 0, error: 1 },
+        items: [{ row: 1, name: showForm.name || "Unknown Show", status: "Error", message: msg }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
     }
   };
 
@@ -276,6 +294,13 @@ const AdminDashboard = () => {
     );
     if (duplicateSeason) {
       toast.error(`Season ${seasonNumber} already exists for this show`);
+      const report = {
+        type: "seasons",
+        counts: { success: 0, duplicate: 1, error: 0 },
+        items: [{ row: 1, name: `Season ${seasonNumber}`, status: "Duplicate", message: "Already exists for this show" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       return;
     }
 
@@ -285,12 +310,27 @@ const AdminDashboard = () => {
         season_number: seasonNumber,
       });
       toast.success("Season created successfully");
+      const report = {
+        type: "seasons",
+        counts: { success: 1, duplicate: 0, error: 0 },
+        items: [{ row: 1, name: `Season ${seasonNumber}`, status: "Success" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       setSeasonDialog(false);
       setSeasonForm({ show_id: "", season_number: "", name: "" });
       setEditingSeason(null);
       fetchAllData();
     } catch (error) {
+      const msg = error.response?.data?.detail || "Server error";
       toast.error("Failed to create season");
+      const report = {
+        type: "seasons",
+        counts: { success: 0, duplicate: 0, error: 1 },
+        items: [{ row: 1, name: `Season ${seasonNumber}`, status: "Error", message: msg }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
     }
   };
 
@@ -392,6 +432,13 @@ const AdminDashboard = () => {
     );
     if (duplicateEpisode) {
       toast.error(`Episode ${episodeNumber} already exists for this season`);
+      const report = {
+        type: "episodes",
+        counts: { success: 0, duplicate: 1, error: 0 },
+        items: [{ row: 1, name: episodeForm.title || `Episode ${episodeNumber}`, status: "Duplicate", message: "Already exists for this season" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       return;
     }
 
@@ -403,6 +450,13 @@ const AdminDashboard = () => {
       };
       await axiosInstance.post("/episodes", episodeData);
       toast.success("Episode created successfully");
+      const report = {
+        type: "episodes",
+        counts: { success: 1, duplicate: 0, error: 0 },
+        items: [{ row: 1, name: episodeForm.title || `Episode ${episodeNumber}`, status: "Success" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       setEpisodeDialog(false);
       setEpisodeForm({
         show_id: "",
@@ -417,7 +471,15 @@ const AdminDashboard = () => {
       setEditingEpisode(null);
       fetchAllData();
     } catch (error) {
+      const msg = error.response?.data?.detail || "Server error";
       toast.error("Failed to create episode");
+      const report = {
+        type: "episodes",
+        counts: { success: 0, duplicate: 0, error: 1 },
+        items: [{ row: 1, name: episodeForm.title || `Episode ${episodeNumber}`, status: "Error", message: msg }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
     }
   };
 
@@ -540,6 +602,13 @@ const AdminDashboard = () => {
       };
       await axiosInstance.post("/movies", movieData);
       toast.success("Movie created successfully");
+      const report = {
+        type: "movies",
+        counts: { success: 1, duplicate: 0, error: 0 },
+        items: [{ row: 1, name: movieForm.title, status: "Success" }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
       setMovieDialog(false);
       setMovieForm({
         show_id: "",
@@ -553,7 +622,15 @@ const AdminDashboard = () => {
       setEditingMovie(null);
       fetchAllData();
     } catch (error) {
+      const msg = error.response?.data?.detail || "Server error";
       toast.error("Failed to create movie");
+      const report = {
+        type: "movies",
+        counts: { success: 0, duplicate: 0, error: 1 },
+        items: [{ row: 1, name: movieForm.title || "Unknown Movie", status: "Error", message: msg }]
+      };
+      setBulkReport(report);
+      setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
     }
   };
 
@@ -713,11 +790,16 @@ const AdminDashboard = () => {
           return;
         }
 
-        let successCount = 0;
-        let errorCount = 0;
+        const reportItems = [];
+        let sCount = 0;
+        let dCount = 0;
+        let eCount = 0;
 
         for (let i = 0; i < data.length; i++) {
           const item = data[i];
+          const rowNum = i + 2; 
+          let itemName = getCellValue(item, ['name', 'title', 'show name', 'show_name']) || `Row ${rowNum}`;
+          
           try {
             if (bulkType === "shows") {
               const showData = {
@@ -726,46 +808,87 @@ const AdminDashboard = () => {
                 poster_url: getCellValue(item, ['poster_url', 'poster', 'image', 'url']),
               };
               if (!showData.name) {
-                console.log("Row Skipped - Name not found in row:", item);
+                reportItems.push({ row: rowNum, name: "Unknown", status: "Error", message: "Show name is missing" });
+                eCount++;
                 continue;
               }
               await axiosInstance.post("/shows", showData);
+              reportItems.push({ row: rowNum, name: showData.name, status: "Success" });
+              sCount++;
             } else if (bulkType === "seasons") {
               const seasonNumberStr = getCellValue(item, ['season_number', 'season', 'number']);
               const seasonNumber = parseInt(seasonNumberStr);
-              if (isNaN(seasonNumber)) continue;
+              if (isNaN(seasonNumber)) {
+                reportItems.push({ row: rowNum, name: itemName, status: "Error", message: "Invalid season number" });
+                eCount++;
+                continue;
+              }
 
               const duplicate = seasons.find(s => s.show_id === bulkForm.show_id && s.season_number === seasonNumber);
-              if (duplicate) continue;
+              if (duplicate) {
+                reportItems.push({ row: rowNum, name: `Season ${seasonNumber}`, status: "Duplicate", message: "Already exists for this show" });
+                dCount++;
+                continue;
+              }
 
               await axiosInstance.post("/seasons", {
                 show_id: bulkForm.show_id,
                 season_number: seasonNumber,
                 name: getCellValue(item, ['name', 'title']),
               });
+              reportItems.push({ row: rowNum, name: `Season ${seasonNumber}`, status: "Success" });
+              sCount++;
             } else if (bulkType === "episodes") {
               const epNumberStr = getCellValue(item, ['episode_number', 'episode', 'number']);
               const epNumber = parseInt(epNumberStr);
               const videoUrl = getCellValue(item, ['video_url', 'url', 'video', 'link']);
-              if (isNaN(epNumber) || !videoUrl) continue;
+              const title = getCellValue(item, ['title', 'name']) || `Episode ${epNumber}`;
+              
+              if (isNaN(epNumber)) {
+                reportItems.push({ row: rowNum, name: "Unknown", status: "Error", message: "Invalid episode number" });
+                eCount++;
+                continue;
+              }
+              if (!videoUrl) {
+                reportItems.push({ row: rowNum, name: title, status: "Error", message: "Video URL is missing" });
+                eCount++;
+                continue;
+              }
 
               const duplicate = episodes.find(e => e.season_id === bulkForm.season_id && e.episode_number === epNumber);
-              if (duplicate) continue;
+              if (duplicate) {
+                reportItems.push({ row: rowNum, name: title, status: "Duplicate", message: "Already exists in this season" });
+                dCount++;
+                continue;
+              }
 
               await axiosInstance.post("/episodes", {
                 show_id: bulkForm.show_id,
                 season_id: bulkForm.season_id,
                 episode_number: epNumber,
-                title: getCellValue(item, ['title', 'name']),
+                title: title,
                 description: getCellValue(item, ['description', 'summary', 'desc']),
                 video_url: videoUrl,
                 duration: parseInt(getCellValue(item, ['duration', 'time', 'length'])) || null,
                 thumbnail_url: getCellValue(item, ['thumbnail_url', 'thumbnail', 'thumb']),
               });
+              reportItems.push({ row: rowNum, name: title, status: "Success" });
+              sCount++;
             } else if (bulkType === "movies") {
               const title = getCellValue(item, ['title', 'name']);
               const videoUrl = getCellValue(item, ['video_url', 'url', 'video', 'link']);
-              if (!title || !videoUrl) continue;
+              
+              if (!title) {
+                reportItems.push({ row: rowNum, name: "Unknown", status: "Error", message: "Movie title is missing" });
+                eCount++;
+                continue;
+              }
+              if (!videoUrl) {
+                reportItems.push({ row: rowNum, name: title, status: "Error", message: "Video URL is missing" });
+                eCount++;
+                continue;
+              }
+
               await axiosInstance.post("/movies", {
                 show_id: bulkForm.show_id === "none" ? "" : bulkForm.show_id,
                 title: title,
@@ -775,17 +898,32 @@ const AdminDashboard = () => {
                 thumbnail_url: getCellValue(item, ['thumbnail_url', 'thumbnail', 'thumb']),
                 poster_url: getCellValue(item, ['poster_url', 'poster', 'image']),
               });
+              reportItems.push({ row: rowNum, name: title, status: "Success" });
+              sCount++;
             }
-            successCount++;
           } catch (err) {
-            console.error("Failed to save item:", item);
-            console.error("Error Details:", err.response?.data || err.message);
-            errorCount++;
+            const errorMsg = err.response?.data?.detail || "Server error";
+            reportItems.push({ row: rowNum, name: itemName, status: "Error", message: errorMsg });
+            eCount++;
           }
           setUploadProgress(Math.round(((i + 1) / data.length) * 100));
         }
 
-        toast.success(`Bulk upload completed! Success: ${successCount}, Errors/Duplicates: ${errorCount}`);
+        // Store report and set clear timer
+        const currentReport = {
+          type: bulkType,
+          items: reportItems,
+          counts: { success: sCount, duplicate: dCount, error: eCount }
+        };
+        setBulkReport(currentReport);
+        
+        // Clear after 1 min (60,000ms)
+        setTimeout(() => {
+          setBulkReport(prev => (prev === currentReport ? null : prev));
+        }, 60000);
+
+        toast.success(`${sCount} saved, ${dCount} duplicates, ${eCount} errors. Click 'View Report' for details.`);
+        
         setTimeout(() => {
           handleCloseBulkDialog();
           fetchAllData();
@@ -1085,7 +1223,20 @@ const AdminDashboard = () => {
           {/* Shows Tab */}
           <TabsContent value="shows" className="mt-4 sm:mt-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Manage Shows</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                <h2 className="text-xl sm:text-2xl font-bold">Manage Shows</h2>
+                {bulkReport?.type === "shows" && (
+                  <Button
+                    onClick={() => setReportDialog(true)}
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-400 hover:text-black h-8 sm:h-9"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Report
+                  </Button>
+                )}
+              </div>
               <Dialog
                 open={showDialog}
                 onOpenChange={(open) => {
@@ -1292,6 +1443,17 @@ const AdminDashboard = () => {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                       <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
+                      {bulkReport?.type === "seasons" && (
+                        <Button
+                          onClick={() => setReportDialog(true)}
+                          variant="outline"
+                          size="sm"
+                          className="text-gray-400 hover:text-black h-8 sm:h-9"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          View Report
+                        </Button>
+                      )}
                       {selectedSeasons.length > 0 && (
                         <Button
                           onClick={() => handleBulkDelete("seasons")}
@@ -1508,6 +1670,17 @@ const AdminDashboard = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 <h2 className="text-xl sm:text-2xl font-bold">Manage Episodes</h2>
+                {bulkReport?.type === "episodes" && (
+                  <Button
+                    onClick={() => setReportDialog(true)}
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-400 hover:text-black h-8 sm:h-9"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Report
+                  </Button>
+                )}
                 {selectedEpisodes.length > 0 && (
                   <Button
                     onClick={() => handleBulkDelete("episodes")}
@@ -1532,7 +1705,7 @@ const AdminDashboard = () => {
                         setSelectedEpisodes([...new Set([...selectedEpisodes, ...pageItems])]);
                       }
                     }}
-                    className="text-xs text-gray-400 hover:text-white"
+                    className="text-xs text-gray-400 hover:text-black"
                   >
                     {episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).length > 0 && episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).every(e => selectedEpisodes.includes(e.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
@@ -1832,6 +2005,17 @@ const AdminDashboard = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
                 <h2 className="text-xl sm:text-2xl font-bold">Manage Movies</h2>
+                {bulkReport?.type === "movies" && (
+                  <Button
+                    onClick={() => setReportDialog(true)}
+                    variant="outline"
+                    size="sm"
+                    className="text-gray-400 hover:text-black h-8 sm:h-9"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Report
+                  </Button>
+                )}
                 {selectedMovies.length > 0 && (
                   <Button
                     onClick={() => handleBulkDelete("movies")}
@@ -1856,7 +2040,7 @@ const AdminDashboard = () => {
                         setSelectedMovies([...new Set([...selectedMovies, ...pageItems])]);
                       }
                     }}
-                    className="text-xs text-gray-400 hover:text-white"
+                    className="text-xs text-gray-400 hover:text-black"
                   >
                     {movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).length > 0 && movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).every(m => selectedMovies.includes(m.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
@@ -2379,6 +2563,72 @@ const AdminDashboard = () => {
               )}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Report Dialog */}
+      <Dialog open={reportDialog} onOpenChange={setReportDialog}>
+        <DialogContent className="bg-[#1a1a1a] text-white border-gray-800 max-w-4xl max-h-[90vh] overflow-hidden flex flex-col rounded-lg shadow-2xl">
+          <DialogHeader className="pb-4 border-b border-gray-800">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
+              <FileCheck2 className="h-5 w-5 text-green-500" />
+              Bulk Upload Report - {bulkReport?.type?.toUpperCase()}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 mt-1">
+              Summary: <span className="text-green-500 font-semibold">{bulkReport?.counts.success} Saved</span>, 
+              <span className="text-yellow-500 font-semibold mx-2">{bulkReport?.counts.duplicate} Duplicates</span>, 
+              <span className="text-red-500 font-semibold">{bulkReport?.counts.error} Errors</span>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-auto mt-4 border border-gray-800 rounded-md">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-black text-gray-400 sticky top-0">
+                <tr>
+                  <th className="px-4 py-3 font-medium w-16 text-center border-b border-gray-800">Row</th>
+                  <th className="px-4 py-3 font-medium border-b border-gray-800">Item Name</th>
+                  <th className="px-4 py-3 font-medium w-24 text-center border-b border-gray-800">Status</th>
+                  <th className="px-4 py-3 font-medium border-b border-gray-800">Message</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-800">
+                {bulkReport?.items.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3 text-gray-500 font-mono text-center">{item.row}</td>
+                    <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={item.name}>{item.name}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        item.status === "Success" ? "bg-green-500/20 text-green-500" :
+                        item.status === "Duplicate" ? "bg-yellow-500/20 text-yellow-500" :
+                        "bg-red-500/20 text-red-500"
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className={`px-4 py-3 text-xs ${item.status === 'Error' ? 'text-red-400' : 'text-gray-400'}`}>
+                      {item.message || "-"}
+                    </td>
+                  </tr>
+                ))}
+                {(!bulkReport || bulkReport.items.length === 0) && (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-8 text-center text-gray-500 italic">
+                      No data available in this report.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Button 
+              onClick={() => setReportDialog(false)} 
+              className="bg-[#e50914] hover:bg-[#b00710] text-white px-8 font-semibold shadow-lg transition-all active:scale-95"
+            >
+              Close Report
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
