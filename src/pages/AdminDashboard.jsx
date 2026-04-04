@@ -102,6 +102,9 @@ const AdminDashboard = () => {
   const [editingSeason, setEditingSeason] = useState(null);
   const [editingEpisode, setEditingEpisode] = useState(null);
   const [editingMovie, setEditingMovie] = useState(null);
+  const [selectedSeasons, setSelectedSeasons] = useState([]);
+  const [selectedEpisodes, setSelectedEpisodes] = useState([]);
+  const [selectedMovies, setSelectedMovies] = useState([]);
 
   // Forms
   const [showForm, setShowForm] = useState({
@@ -630,6 +633,41 @@ const AdminDashboard = () => {
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to change password");
     }
+  };
+
+  // Bulk Delete logic
+  const handleBulkDelete = async (type) => {
+    let ids = [];
+    if (type === "seasons") ids = selectedSeasons;
+    else if (type === "episodes") ids = selectedEpisodes;
+    else if (type === "movies") ids = selectedMovies;
+
+    if (ids.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${ids.length} ${type}?`)) return;
+
+    setLoading(true);
+    let success = 0;
+    let fail = 0;
+
+    for (const id of ids) {
+      try {
+        await axiosInstance.delete(`/${type}/${id}`);
+        success++;
+      } catch (err) {
+        console.error(`Failed to delete ${type} with id ${id}:`, err);
+        fail++;
+      }
+    }
+
+    toast.success(`Bulk delete finished. Success: ${success}, Failed: ${fail}`);
+    
+    // Clear selection
+    if (type === "seasons") setSelectedSeasons([]);
+    else if (type === "episodes") setSelectedEpisodes([]);
+    else if (type === "movies") setSelectedMovies([]);
+
+    fetchAllData();
+    setLoading(false);
   };
 
   // ------------------------------------------
@@ -1252,7 +1290,20 @@ const AdminDashboard = () => {
               return (
                 <>
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                    <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                      <h2 className="text-xl sm:text-2xl font-bold">Manage Seasons</h2>
+                      {selectedSeasons.length > 0 && (
+                        <Button
+                          onClick={() => handleBulkDelete("seasons")}
+                          variant="destructive"
+                          size="sm"
+                          className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Selected ({selectedSeasons.length})
+                        </Button>
+                      )}
+                    </div>
                     <Dialog
                       open={seasonDialog}
                       onOpenChange={(open) => {
@@ -1370,14 +1421,28 @@ const AdminDashboard = () => {
                                 </h3>
                                 <div className="space-y-2">
                                   {showSeasons.map((season) => (
-                                    <div
-                                      key={season.id}
-                                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800"
-                                    >
-                                      <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
-                                        Season {season.season_number}
-                                        {season.name && ` - ${truncateText(season.name, 30)}`}
-                                      </span>
+                                      <div
+                                        key={season.id}
+                                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-[#1a1a1a] p-3 rounded border border-gray-800 group transition-all"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <input
+                                            type="checkbox"
+                                            className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedSeasons.includes(season.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                            checked={selectedSeasons.includes(season.id)}
+                                            onChange={() => {
+                                              if (selectedSeasons.includes(season.id)) {
+                                                setSelectedSeasons(selectedSeasons.filter(id => id !== season.id));
+                                              } else {
+                                                setSelectedSeasons([...selectedSeasons, season.id]);
+                                              }
+                                            }}
+                                          />
+                                          <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                                            Season {season.season_number}
+                                            {season.name && ` - ${truncateText(season.name, 30)}`}
+                                          </span>
+                                        </div>
                                       <div className="flex gap-2 flex-shrink-0 justify-end">
                                         <Button
                                           data-testid={`edit-season-${season.id}`}
@@ -1441,7 +1506,38 @@ const AdminDashboard = () => {
           {/* Episodes Tab */}
           <TabsContent value="episodes" className="mt-4 sm:mt-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Manage Episodes</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                <h2 className="text-xl sm:text-2xl font-bold">Manage Episodes</h2>
+                {selectedEpisodes.length > 0 && (
+                  <Button
+                    onClick={() => handleBulkDelete("episodes")}
+                    variant="destructive"
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected ({selectedEpisodes.length})
+                  </Button>
+                )}
+                {episodes.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const pageItems = episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).map(e => e.id);
+                      const allSelected = pageItems.every(id => selectedEpisodes.includes(id));
+                      if (allSelected) {
+                        setSelectedEpisodes(selectedEpisodes.filter(id => !pageItems.includes(id)));
+                      } else {
+                        setSelectedEpisodes([...new Set([...selectedEpisodes, ...pageItems])]);
+                      }
+                    }}
+                    className="text-xs text-gray-400 hover:text-white"
+                  >
+                    {episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).length > 0 && episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).every(e => selectedEpisodes.includes(e.id)) ? "Deselect Page" : "Select Page"}
+                  </Button>
+                )}
+              </div>
               <Dialog
                 open={episodeDialog}
                 onOpenChange={(open) => {
@@ -1639,13 +1735,27 @@ const AdminDashboard = () => {
                     return (
                       <div
                         key={episode.id}
-                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden group transition-all"
                       >
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
                           <div className="flex-1 min-w-0 w-full">
-                            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={`${show?.name} - Season ${season?.season_number}`}>
-                              {show?.name} - Season {season?.season_number}
-                            </p>
+                            <div className="flex items-center gap-3 mb-1">
+                              <input
+                                type="checkbox"
+                                className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedEpisodes.includes(episode.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                checked={selectedEpisodes.includes(episode.id)}
+                                onChange={() => {
+                                  if (selectedEpisodes.includes(episode.id)) {
+                                    setSelectedEpisodes(selectedEpisodes.filter(id => id !== episode.id));
+                                  } else {
+                                    setSelectedEpisodes([...selectedEpisodes, episode.id]);
+                                  }
+                                }}
+                              />
+                              <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={`${show?.name} - Season ${season?.season_number}`}>
+                                {show?.name} - Season {season?.season_number}
+                              </p>
+                            </div>
                             <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
                               Episode {episode.episode_number}: {truncateText(episode.title, 50)}
                             </h3>
@@ -1720,7 +1830,38 @@ const AdminDashboard = () => {
           {/* Movies Tab */}
           <TabsContent value="movies" className="mt-4 sm:mt-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold">Manage Movies</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                <h2 className="text-xl sm:text-2xl font-bold">Manage Movies</h2>
+                {selectedMovies.length > 0 && (
+                  <Button
+                    onClick={() => handleBulkDelete("movies")}
+                    variant="destructive"
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected ({selectedMovies.length})
+                  </Button>
+                )}
+                {movies.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const pageItems = movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).map(m => m.id);
+                      const allSelected = pageItems.every(id => selectedMovies.includes(id));
+                      if (allSelected) {
+                        setSelectedMovies(selectedMovies.filter(id => !pageItems.includes(id)));
+                      } else {
+                        setSelectedMovies([...new Set([...selectedMovies, ...pageItems])]);
+                      }
+                    }}
+                    className="text-xs text-gray-400 hover:text-white"
+                  >
+                    {movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).length > 0 && movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).every(m => selectedMovies.includes(m.id)) ? "Deselect Page" : "Select Page"}
+                  </Button>
+                )}
+              </div>
               <Dialog
                 open={movieDialog}
                 onOpenChange={(open) => {
@@ -1886,13 +2027,27 @@ const AdminDashboard = () => {
                     return (
                       <div
                         key={movie.id}
-                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
+                        className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden group transition-all"
                       >
                         <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
                           <div className="flex-1 min-w-0 w-full">
-                            <p className="text-xs sm:text-sm text-gray-400 mb-1 truncate" title={show?.name}>
-                              {show?.name || "Single Movie"}
-                            </p>
+                            <div className="flex items-center gap-3 mb-1">
+                              <input
+                                type="checkbox"
+                                className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedMovies.includes(movie.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                checked={selectedMovies.includes(movie.id)}
+                                onChange={() => {
+                                  if (selectedMovies.includes(movie.id)) {
+                                    setSelectedMovies(selectedMovies.filter(id => id !== movie.id));
+                                  } else {
+                                    setSelectedMovies([...selectedMovies, movie.id]);
+                                  }
+                                }}
+                              />
+                              <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={show?.name}>
+                                {show?.name || "Single Movie"}
+                              </p>
+                            </div>
                             <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={movie.title}>
                               {truncateText(movie.title, 60)}
                             </h3>
