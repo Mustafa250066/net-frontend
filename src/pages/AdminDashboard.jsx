@@ -1275,7 +1275,7 @@ const AdminDashboard = () => {
               </div>
               
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-hide">
-                <div className="flex gap-2 bg-black border border-gray-800 p-1 rounded-md">
+                <div className="flex gap-2 bg-black border border-gray-800 p-2 rounded-md">
                   {["shows", "seasons", "episodes", "movies"].map((filter) => (
                     <button
                       key={filter}
@@ -1416,7 +1416,7 @@ const AdminDashboard = () => {
                               <h3 className="text-lg font-semibold mb-3 border-l-2 border-[#e50914] pl-3">{show.name}</h3>
                               <div className="space-y-2">
                                 {showSeasons.map((season) => (
-                                  <div key={season.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-black/40 p-3 rounded border border-gray-800 group transition-all">
+                                  <div key={season.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-3 border border-gray-800 rounded-lg group hover:bg-black/40 transition-all">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                       <input
                                         type="checkbox"
@@ -1508,7 +1508,7 @@ const AdminDashboard = () => {
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-7 text-[10px] text-gray-400 hover:text-black"
+                                    className="h-7 text-[13px] text-gray-400 hover:text-black"
                                     onClick={() => {
                                       if (isAllSelected) {
                                         setSelectedEpisodes(selectedEpisodes.filter(id => !groupEpisodeIds.includes(id)));
