@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2 } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2, Search } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
 import {
@@ -109,6 +109,11 @@ const AdminDashboard = () => {
   const [bulkReport, setBulkReport] = useState(null);
   const [reportDialog, setReportDialog] = useState(false);
 
+  // Search State
+  const [adminSearchQuery, setAdminSearchQuery] = useState("");
+  const [adminSearchFilters, setAdminSearchFilters] = useState(["shows", "seasons", "episodes", "movies"]);
+  const [activeTab, setActiveTab] = useState("shows");
+
   // Forms
   const [showForm, setShowForm] = useState({
     name: "",
@@ -143,6 +148,46 @@ const AdminDashboard = () => {
     thumbnail_url: "",
     poster_url: "",
   });
+
+  // Global Search Filtering Logic
+  const getFilteredResults = () => {
+    if (!adminSearchQuery.trim()) return { filteredShows: [], filteredSeasons: [], filteredEpisodes: [], filteredMovies: [] };
+
+    const query = adminSearchQuery.toLowerCase();
+    
+    // Helper to find show by name
+    const matchesShowName = (showId) => {
+      const show = shows.find(s => s.id === showId);
+      return show && show.name.toLowerCase().includes(query);
+    };
+
+    return {
+      filteredShows: adminSearchFilters.includes("shows") 
+        ? shows.filter(s => s.name.toLowerCase().includes(query)) 
+        : [],
+      filteredSeasons: adminSearchFilters.includes("seasons")
+        ? seasons.filter(s => matchesShowName(s.show_id))
+        : [],
+      filteredEpisodes: adminSearchFilters.includes("episodes")
+        ? episodes.filter(e => matchesShowName(e.show_id) || e.title.toLowerCase().includes(query))
+        : [],
+      filteredMovies: adminSearchFilters.includes("movies")
+        ? movies.filter(m => (m.show_id && matchesShowName(m.show_id)) || m.title.toLowerCase().includes(query))
+        : []
+    };
+  };
+
+  const { filteredShows, filteredSeasons, filteredEpisodes, filteredMovies } = getFilteredResults();
+  const hasSearchResults = filteredShows.length > 0 || filteredSeasons.length > 0 || filteredEpisodes.length > 0 || filteredMovies.length > 0;
+
+  const toggleSearchFilter = (filter) => {
+    setAdminSearchFilters(prev => 
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
+    );
+  };
+
+  // Helper to get total search count
+  const totalSearchCount = filteredShows.length + filteredSeasons.length + filteredEpisodes.length + filteredMovies.length;
 
   useEffect(() => {
     checkAuth();
@@ -1099,10 +1144,7 @@ const AdminDashboard = () => {
       <header className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <h1
-              className="text-lg sm:text-xl md:text-2xl font-bold text-[#e50914] truncate"
-              style={{ fontFamily: "Space Grotesk, sans-serif" }}
-            >
+            <h1 className="text-xl sm:text-2xl font-bold text-[#e50914] truncate">
               Admin Dashboard
             </h1>
 
@@ -1200,25 +1242,383 @@ const AdminDashboard = () => {
       </header>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-        <Tabs defaultValue="shows" className="w-full">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          {/* Sticky Search and Tabs Container */}
+          <div className="sticky top-[52px] sm:top-[64px] z-40 bg-black/95 backdrop-blur-sm -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8 py-4 border-b border-gray-800">
+          {/* Search and Filters Section */}
+          <div className="mb-4 bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4">
+            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 group-focus-within:text-[#e50914] transition-colors" />
+                <Input
+                  placeholder="Search across all categories by show name..."
+                  className="pl-10 bg-black border-gray-700 focus:border-[#e50914] h-10 text-sm sm:text-base placeholder:text-gray-600"
+                  value={adminSearchQuery}
+                  onChange={(e) => {
+                    setAdminSearchQuery(e.target.value);
+                    if (e.target.value) setActiveTab("search");
+                    else setActiveTab("shows");
+                  }}
+                />
+                {adminSearchQuery && (
+                  <button 
+                    onClick={() => {
+                      setAdminSearchQuery("");
+                      setActiveTab("shows");
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar scrollbar-hide">
+                <div className="flex gap-2 bg-black border border-gray-800 p-1 rounded-md">
+                  {["shows", "seasons", "episodes", "movies"].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => toggleSearchFilter(filter)}
+                      className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
+                        adminSearchFilters.includes(filter)
+                          ? "bg-[#e50914] text-white"
+                          : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAdminSearchFilters(["shows", "seasons", "episodes", "movies"])}
+                  className="text-xs text-gray-400 hover:text-black h-9"
+                >
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Responsive Tabs List */}
-          <div className="overflow-x-auto pb-2 -mx-3 sm:mx-0 px-3 sm:px-0">
+          <div className="overflow-x-auto pb-0 -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-hide">
             <TabsList className="bg-[#1a1a1a] border border-gray-800 w-full sm:w-auto min-w-max">
-              <TabsTrigger value="shows" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+              <TabsTrigger 
+                value="shows" 
+                className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+              >
                 Shows
               </TabsTrigger>
-              <TabsTrigger value="seasons" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+              <TabsTrigger 
+                value="seasons" 
+                className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+              >
                 Seasons
               </TabsTrigger>
-              <TabsTrigger value="episodes" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+              <TabsTrigger 
+                value="episodes" 
+                className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+              >
                 Episodes
               </TabsTrigger>
-              <TabsTrigger value="movies" className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4">
+              <TabsTrigger 
+                value="movies" 
+                className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+              >
                 Movies
               </TabsTrigger>
+              {adminSearchQuery && (
+                <TabsTrigger 
+                  value="search" 
+                  className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4 flex items-center gap-2 text-[#e50914] font-bold"
+                >
+                  <Search className="h-4 w-4" />
+                  Results ({totalSearchCount})
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
+        </div>
+
+          {/* Search Results Tab Content */}
+          <TabsContent value="search" className="mt-4 sm:mt-6 animate-in fade-in duration-300">
+            {!hasSearchResults ? (
+              <div className="flex flex-col items-center justify-center py-12 sm:py-20 bg-[#1a1a1a] rounded-lg border border-dashed border-gray-800">
+                <Search className="h-10 w-10 text-gray-700 mb-4" />
+                <h3 className="text-lg sm:text-xl font-bold text-gray-400">No matches found</h3>
+                <p className="text-gray-600 mt-2 text-sm sm:text-base">Try a different show name or adjust your filters.</p>
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {/* Shows Results */}
+                {filteredShows.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                       <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Shows ({filteredShows.length})</h2>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      {filteredShows.map((show) => {
+                        const hasPoster = show.poster_url && show.poster_url.trim() !== "";
+                        return (
+                          <div key={show.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 hover:border-gray-700 transition-colors">
+                            {hasPoster ? (
+                              <img
+                                src={convertToDirectUrl(show.poster_url)}
+                                alt={show.name}
+                                className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
+                              />
+                            ) : (
+                              <div className="w-full h-40 sm:h-48 bg-gray-800 rounded-lg mb-3 flex items-center justify-center">
+                                <Search className="h-8 w-8 text-gray-600" />
+                              </div>
+                            )}
+                            <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1">{show.name}</h3>
+                            {show.description && <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2">{show.description}</p>}
+                            <div className="flex gap-2">
+                              <Button onClick={() => handleEditShow(show)} variant="outline" size="sm" className="flex-1 text-xs">Edit</Button>
+                              <Button onClick={() => handleDeleteShow(show.id)} variant="destructive" size="sm" className="flex-1 text-xs">Delete</Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Seasons Results */}
+                {filteredSeasons.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                       <div className="flex items-center gap-3">
+                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Seasons ({filteredSeasons.length})</h2>
+                         {selectedSeasons.filter(id => filteredSeasons.some(fs => fs.id === id)).length > 0 && (
+                            <Button
+                              onClick={() => handleBulkDelete("seasons")}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Selected ({selectedSeasons.filter(id => filteredSeasons.some(fs => fs.id === id)).length})
+                            </Button>
+                         )}
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                      {shows
+                        .filter(show => filteredSeasons.some(s => s.show_id === show.id))
+                        .map((show) => {
+                          const showSeasons = filteredSeasons.filter(s => s.show_id === show.id);
+                          return (
+                            <div key={show.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden">
+                              <h3 className="text-lg font-semibold mb-3 border-l-2 border-[#e50914] pl-3">{show.name}</h3>
+                              <div className="space-y-2">
+                                {showSeasons.map((season) => (
+                                  <div key={season.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 bg-black/40 p-3 rounded border border-gray-800 group transition-all">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <input
+                                        type="checkbox"
+                                        className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedSeasons.includes(season.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                        checked={selectedSeasons.includes(season.id)}
+                                        onChange={() => {
+                                          if (selectedSeasons.includes(season.id)) {
+                                            setSelectedSeasons(selectedSeasons.filter(id => id !== season.id));
+                                          } else {
+                                            setSelectedSeasons([...selectedSeasons, season.id]);
+                                          }
+                                        }}
+                                      />
+                                      <span className="text-sm sm:text-base truncate">
+                                        Season {season.season_number} {season.name && `- ${season.name}`}
+                                      </span>
+                                    </div>
+                                    <div className="flex gap-2 flex-shrink-0 justify-end">
+                                      <Button onClick={() => handleEditSeason(season)} size="sm" variant="outline" className="h-8 px-3"><Edit className="h-3.5 w-3.5" /></Button>
+                                      <Button onClick={() => handleDeleteSeason(season.id)} size="sm" variant="destructive" className="h-8 px-3"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Episodes Results */}
+                {filteredEpisodes.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                       <div className="flex items-center gap-3">
+                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Episodes ({filteredEpisodes.length})</h2>
+                         {selectedEpisodes.filter(id => filteredEpisodes.some(fe => fe.id === id)).length > 0 && (
+                            <Button
+                              onClick={() => handleBulkDelete("episodes")}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Selected ({selectedEpisodes.filter(id => filteredEpisodes.some(fe => fe.id === id)).length})
+                            </Button>
+                         )}
+                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6">
+                      {shows
+                        .filter(show => filteredEpisodes.some(e => e.show_id === show.id))
+                        .map(show => {
+                          const showMatchedSeasons = seasons.filter(s => 
+                            s.show_id === show.id && 
+                            filteredEpisodes.some(e => e.season_id === s.id)
+                          );
+
+                          return showMatchedSeasons.map(season => {
+                            const groupEpisodes = filteredEpisodes.filter(e => 
+                              e.show_id === show.id && 
+                              e.season_id === season.id
+                            );
+                            const groupEpisodeIds = groupEpisodes.map(e => e.id);
+                            const isAllSelected = groupEpisodeIds.every(id => selectedEpisodes.includes(id));
+
+                            return (
+                              <div key={season.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg overflow-hidden shadow-sm">
+                                <div className="bg-black/40 px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                     <input
+                                      type="checkbox"
+                                      className="h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0"
+                                      checked={isAllSelected}
+                                      onChange={() => {
+                                        if (isAllSelected) {
+                                          setSelectedEpisodes(selectedEpisodes.filter(id => !groupEpisodeIds.includes(id)));
+                                        } else {
+                                          setSelectedEpisodes([...new Set([...selectedEpisodes, ...groupEpisodeIds])]);
+                                        }
+                                      }}
+                                    />
+                                    <h3 className="text-sm sm:text-base font-bold truncate">
+                                      {show.name} - Season {season.season_number}
+                                      <span className="ml-2 text-[10px] sm:text-xs text-gray-500 font-medium">({groupEpisodes.length} episodes)</span>
+                                    </h3>
+                                  </div>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 text-[10px] text-gray-400 hover:text-black"
+                                    onClick={() => {
+                                      if (isAllSelected) {
+                                        setSelectedEpisodes(selectedEpisodes.filter(id => !groupEpisodeIds.includes(id)));
+                                      } else {
+                                        setSelectedEpisodes([...new Set([...selectedEpisodes, ...groupEpisodeIds])]);
+                                      }
+                                    }}
+                                  >
+                                    {isAllSelected ? "Deselect All" : "Select All"}
+                                  </Button>
+                                </div>
+                                <div className="p-4 space-y-3">
+                                  {groupEpisodes.map((episode) => (
+                                    <div key={episode.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 group hover:bg-black/40 transition-all">
+                                      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
+                                        <div className="flex-1 min-w-0 w-full">
+                                          <div className="flex items-center gap-3 mb-1">
+                                            <input
+                                              type="checkbox"
+                                              className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedEpisodes.includes(episode.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                              checked={selectedEpisodes.includes(episode.id)}
+                                              onChange={() => {
+                                                if (selectedEpisodes.includes(episode.id)) {
+                                                  setSelectedEpisodes(selectedEpisodes.filter(id => id !== episode.id));
+                                                } else {
+                                                  setSelectedEpisodes([...selectedEpisodes, episode.id]);
+                                                }
+                                              }}
+                                            />
+                                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">Episode {episode.episode_number}</span>
+                                          </div>
+                                          <h4 className="text-sm sm:text-base font-semibold mb-1 truncate">{episode.title || "Untitled Episode"}</h4>
+                                          {episode.description && <p className="text-xs text-gray-400 line-clamp-1 mb-1">{episode.description}</p>}
+                                          <p className="text-[10px] text-gray-500 truncate">URL: {episode.video_url}</p>
+                                        </div>
+                                        <div className="flex gap-2 flex-shrink-0">
+                                          <Button onClick={() => handleEditEpisode(episode)} size="sm" variant="outline" className="h-8"><Edit className="h-3.5 w-3.5" /></Button>
+                                          <Button onClick={() => handleDeleteEpisode(episode.id)} size="sm" variant="destructive" className="h-8"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          });
+                        })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Movies Results */}
+                {filteredMovies.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-gray-800 pb-2">
+                       <div className="flex items-center gap-3">
+                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Movies ({filteredMovies.length})</h2>
+                         {selectedMovies.filter(id => filteredMovies.some(fm => fm.id === id)).length > 0 && (
+                            <Button
+                              onClick={() => handleBulkDelete("movies")}
+                              variant="destructive"
+                              size="sm"
+                              className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Selected ({selectedMovies.filter(id => filteredMovies.some(fm => fm.id === id)).length})
+                            </Button>
+                         )}
+                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                      {filteredMovies.map((movie) => {
+                        const hasPoster = movie.poster_url && movie.poster_url.trim() !== "";
+                        return (
+                          <div key={movie.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 group hover:border-gray-700 transition-colors">
+                            <div className="flex items-center gap-3 mb-3">
+                              <input
+                                type="checkbox"
+                                className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedMovies.includes(movie.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                checked={selectedMovies.includes(movie.id)}
+                                onChange={() => {
+                                  if (selectedMovies.includes(movie.id)) {
+                                    setSelectedMovies(selectedMovies.filter(id => id !== movie.id));
+                                  } else {
+                                    setSelectedMovies([...selectedMovies, movie.id]);
+                                  }
+                                }}
+                              />
+                              <h3 className="text-base font-semibold truncate flex-1">{movie.title}</h3>
+                            </div>
+                            {hasPoster ? (
+                               <img src={convertToDirectUrl(movie.poster_url)} alt={movie.title} className="w-full h-32 object-cover rounded mb-3" />
+                            ) : (
+                               <div className="w-full h-32 bg-gray-800 rounded mb-3 flex items-center justify-center">
+                                 <Search className="h-8 w-8 text-gray-600" />
+                               </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button onClick={() => handleEditMovie(movie)} size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
+                              <Button onClick={() => handleDeleteMovie(movie.id)} size="sm" variant="destructive" className="flex-1 text-xs">Delete</Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </TabsContent>
 
           {/* Shows Tab */}
           <TabsContent value="shows" className="mt-4 sm:mt-6">
@@ -1256,7 +1656,7 @@ const AdminDashboard = () => {
                   <Button
                     onClick={() => handleOpenBulkDialog("shows")}
                     variant="ghost"
-                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
                     Bulk Upload
                   </Button>
@@ -1485,7 +1885,7 @@ const AdminDashboard = () => {
                         <Button
                           onClick={() => handleOpenBulkDialog("seasons")}
                           variant="ghost"
-                          className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                          className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                         >
                           Bulk Upload
                         </Button>
@@ -1730,7 +2130,7 @@ const AdminDashboard = () => {
                   <Button
                     onClick={() => handleOpenBulkDialog("episodes")}
                     variant="ghost"
-                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
                     Bulk Upload
                   </Button>
@@ -1897,7 +2297,7 @@ const AdminDashboard = () => {
                 </DialogContent>
               </Dialog>
             </div>
-
+            {/* Episode mapping */}
             <div className="space-y-6">
               <div className="space-y-3 sm:space-y-4">
                 {episodes
@@ -2065,7 +2465,7 @@ const AdminDashboard = () => {
                   <Button
                     onClick={() => handleOpenBulkDialog("movies")}
                     variant="ghost"
-                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
                   >
                     Bulk Upload
                   </Button>
