@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2, Search } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2, Search, Info } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
 import {
@@ -1242,7 +1242,728 @@ const AdminDashboard = () => {
       </header>
 
       {/* Content */}
+      {/* Content */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+        {/* Global Dialogs */}
+        <Dialog
+          open={showDialog}
+          onOpenChange={(open) => {
+            if (!open) handleCloseShowDialog();
+            else setShowDialog(true);
+          }}
+        >
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">
+                {editingShow ? "Edit Show" : "Add New Show"}
+              </DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={editingShow ? handleUpdateShow : handleCreateShow}
+              className="space-y-4"
+            >
+              <div>
+                <Label>Show Name *</Label>
+                <Input
+                  data-testid="show-name-input"
+                  value={showForm.name}
+                  onChange={(e) =>
+                    setShowForm({ ...showForm, name: e.target.value })
+                  }
+                  required
+                  placeholder="E.g. Stranger Things"
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  data-testid="show-description-input"
+                  value={showForm.description}
+                  onChange={(e) =>
+                    setShowForm({
+                      ...showForm,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  placeholder="Brief description of the show..."
+                />
+              </div>
+              <div>
+                <Label>Poster URL</Label>
+                <Input
+                  data-testid="show-poster-input"
+                  value={showForm.poster_url}
+                  onChange={(e) =>
+                    setShowForm({
+                      ...showForm,
+                      poster_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://example.com/poster.jpg"
+                />
+              </div>
+              <Button
+                data-testid="create-show-btn"
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#f40612]"
+              >
+                {editingShow ? "Update Show" : "Create Show"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={seasonDialog}
+          onOpenChange={(open) => {
+            if (!open) handleCloseSeasonDialog();
+            else setSeasonDialog(true);
+          }}
+        >
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">
+                {editingSeason ? "Edit Season" : "Add New Season"}
+              </DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={
+                editingSeason ? handleUpdateSeason : handleCreateSeason
+              }
+              className="space-y-4"
+            >
+              <div>
+                <Label>Select Show *</Label>
+                <Select
+                  value={seasonForm.show_id}
+                  onValueChange={(value) =>
+                    setSeasonForm({ ...seasonForm, show_id: value })
+                  }
+                  required
+                >
+                  <SelectTrigger data-testid="season-show-select" className="w-full">
+                    <SelectValue placeholder="Select a show" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shows.map((show) => (
+                      <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                        {truncateText(show.name, 40)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Season Number *</Label>
+                <Input
+                  data-testid="season-number-input"
+                  type="number"
+                  value={seasonForm.season_number}
+                  onChange={(e) =>
+                    setSeasonForm({
+                      ...seasonForm,
+                      season_number: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="1, 2, 3..."
+                />
+              </div>
+              <div>
+                <Label>Season Name (Optional)</Label>
+                <Input
+                  data-testid="season-name-input"
+                  value={seasonForm.name}
+                  onChange={(e) =>
+                    setSeasonForm({ ...seasonForm, name: e.target.value })
+                  }
+                  placeholder="E.g. Season 1: The Beginning"
+                />
+              </div>
+              <Button
+                data-testid="create-season-btn"
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#f40612]"
+              >
+                {editingSeason ? "Update Season" : "Create Season"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={episodeDialog}
+          onOpenChange={(open) => {
+            if (!open) handleCloseEpisodeDialog();
+            else setEpisodeDialog(true);
+          }}
+        >
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">
+                {editingEpisode ? "Edit Episode" : "Add New Episode"}
+              </DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={
+                editingEpisode ? handleUpdateEpisode : handleCreateEpisode
+              }
+              className="space-y-4"
+            >
+              <div>
+                <Label>Select Show *</Label>
+                <Select
+                  value={episodeForm.show_id}
+                  onValueChange={(value) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      show_id: value,
+                      season_id: "",
+                    })
+                  }
+                  required
+                >
+                  <SelectTrigger data-testid="episode-show-select" className="w-full">
+                    <SelectValue placeholder="Select a show" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {shows.map((show) => (
+                      <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                        {truncateText(show.name, 40)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Select Season *</Label>
+                <Select
+                  value={episodeForm.season_id}
+                  onValueChange={(value) =>
+                    setEpisodeForm({ ...episodeForm, season_id: value })
+                  }
+                  required
+                  disabled={!episodeForm.show_id}
+                >
+                  <SelectTrigger data-testid="episode-season-select" className="w-full">
+                    <SelectValue placeholder="Select a season" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getSeasonsByShow(episodeForm.show_id).map(
+                      (season) => (
+                        <SelectItem key={season.id} value={season.id} className="truncate" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                          Season {season.season_number}
+                          {season.name && ` - ${truncateText(season.name, 30)}`}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Episode Number *</Label>
+                <Input
+                  data-testid="episode-number-input"
+                  type="number"
+                  value={episodeForm.episode_number}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      episode_number: e.target.value,
+                    })
+                  }
+                  required
+                  placeholder="1, 2, 3..."
+                />
+              </div>
+              <div>
+                <Label>Episode Title (Optional)</Label>
+                <Input
+                  data-testid="episode-title-input"
+                  value={episodeForm.title}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      title: e.target.value,
+                    })
+                  }
+                  placeholder="E.g. Chapter One: The Vanishing of Will Byers"
+                />
+              </div>
+              <div>
+                <Label>Video URL *</Label>
+                <Input
+                  data-testid="episode-video-url-input"
+                  value={episodeForm.video_url}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      video_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://..."
+                  required
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  data-testid="episode-description-input"
+                  value={episodeForm.description}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  placeholder="Episode summary..."
+                />
+              </div>
+              <div>
+                <Label>Duration (in minutes)</Label>
+                <Input
+                  data-testid="episode-duration-input"
+                  type="number"
+                  value={episodeForm.duration}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      duration: e.target.value,
+                    })
+                  }
+                  placeholder="45"
+                />
+              </div>
+              <div>
+                <Label>Thumbnail URL</Label>
+                <Input
+                  data-testid="episode-thumbnail-input"
+                  value={episodeForm.thumbnail_url}
+                  onChange={(e) =>
+                    setEpisodeForm({
+                      ...episodeForm,
+                      thumbnail_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+              <Button
+                data-testid="create-episode-btn"
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#f40612]"
+              >
+                {editingEpisode ? "Update Episode" : "Create Episode"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={movieDialog}
+          onOpenChange={(open) => {
+            if (!open) handleCloseMovieDialog();
+            else setMovieDialog(true);
+          }}
+        >
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg sm:text-xl">
+                {editingMovie ? "Edit Movie" : "Add New Movie"}
+              </DialogTitle>
+            </DialogHeader>
+            <form
+              onSubmit={
+                editingMovie ? handleUpdateMovie : handleCreateMovie
+              }
+              className="space-y-4"
+            >
+              <div>
+                <Label>Select Show</Label>
+                <Select
+                  value={movieForm.show_id || "none"}
+                  onValueChange={(value) =>
+                    setMovieForm({
+                      ...movieForm,
+                      show_id: value === "none" ? "" : value,
+                    })
+                  }
+                >
+                  <SelectTrigger data-testid="movie-show-select" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Standalone Movie</SelectItem>
+                    {shows.map((show) => (
+                      <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                        {truncateText(show.name, 40)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Movie Title *</Label>
+                <Input
+                  data-testid="movie-title-input"
+                  value={movieForm.title}
+                  onChange={(e) =>
+                    setMovieForm({ ...movieForm, title: e.target.value })
+                  }
+                  required
+                  placeholder="E.g. Extraction"
+                />
+              </div>
+              <div>
+                <Label>Video URL *</Label>
+                <Input
+                  data-testid="movie-video-url-input"
+                  value={movieForm.video_url}
+                  onChange={(e) =>
+                    setMovieForm({
+                      ...movieForm,
+                      video_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://..."
+                  required
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  data-testid="movie-description-input"
+                  value={movieForm.description}
+                  onChange={(e) =>
+                    setMovieForm({
+                      ...movieForm,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  placeholder="Movie summary..."
+                />
+              </div>
+              <div>
+                <Label>Duration (in minutes)</Label>
+                <Input
+                  data-testid="movie-duration-input"
+                  type="number"
+                  value={movieForm.duration}
+                  onChange={(e) =>
+                    setMovieForm({ ...movieForm, duration: e.target.value })
+                  }
+                  placeholder="120"
+                />
+              </div>
+              <div>
+                <Label>Thumbnail URL</Label>
+                <Input
+                  data-testid="movie-thumbnail-input"
+                  value={movieForm.thumbnail_url}
+                  onChange={(e) =>
+                    setMovieForm({
+                      ...movieForm,
+                      thumbnail_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+              <div>
+                <Label>Poster URL</Label>
+                <Input
+                  data-testid="movie-poster-input"
+                  value={movieForm.poster_url}
+                  onChange={(e) =>
+                    setMovieForm({
+                      ...movieForm,
+                      poster_url: e.target.value,
+                    })
+                  }
+                  placeholder="https://..."
+                />
+              </div>
+              <Button
+                data-testid="create-movie-btn"
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#f40612]"
+              >
+                {editingMovie ? "Update Movie" : "Create Movie"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Upload Dialog */}
+        <Dialog open={bulkDialog} onOpenChange={(open) => !open && handleCloseBulkDialog()}>
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg shadow-2xl">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-xl font-bold text-[#e50914] capitalize">
+                Bulk Upload {bulkType}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleBulkUpload} className="space-y-6">
+              {bulkType === "seasons" && (
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Select Show *</Label>
+                  <Select
+                    value={bulkForm.show_id}
+                    onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value })}
+                    required
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a show" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {shows.map((show) => (
+                        <SelectItem key={show.id} value={show.id}>
+                          {show.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {bulkType === "episodes" && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Select Show *</Label>
+                    <Select
+                      value={bulkForm.show_id}
+                      onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value, season_id: "" })}
+                      required
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a show" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {shows.map((show) => (
+                          <SelectItem key={show.id} value={show.id}>
+                            {show.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Select Season *</Label>
+                    <Select
+                      value={bulkForm.season_id}
+                      onValueChange={(value) => setBulkForm({ ...bulkForm, season_id: value })}
+                      required
+                      disabled={!bulkForm.show_id}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a season" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSeasonsByShow(bulkForm.show_id).map((season) => (
+                          <SelectItem key={season.id} value={season.id}>
+                            Season {season.season_number} {season.name && `- ${season.name}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label className="text-gray-300">Excel File (.xlsx) *</Label>
+                <div className="relative group">
+                  <Input
+                    type="file"
+                    accept=".xlsx"
+                    onChange={(e) => setBulkFile(e.target.files[0])}
+                    required
+                    className="bg-black border-gray-700 focus:border-[#e50914] h-12 pt-2 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#e50914] file:text-white hover:file:bg-[#b00710] cursor-pointer"
+                  />
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500 bg-black/50 p-2 rounded border border-gray-800">
+                    <span className="flex items-center gap-1"><Info className="h-3 w-3" /> Use standard templates</span>
+                    {uploadProgress > 0 && <span className="text-[#e50914] font-bold">{uploadProgress}% uploaded</span>}
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#b00710] text-white font-bold h-12 rounded-md shadow-lg transition-all active:scale-[0.98]"
+                disabled={bulkLoading}
+              >
+                {bulkLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Processing...</span>
+                  </div>
+                ) : (
+                  "Upload & Save"
+                )}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Report Dialog */}
+        <Dialog open={reportDialog} onOpenChange={setReportDialog}>
+          <DialogContent className="bg-[#1a1a1a] text-white border-gray-800 max-w-4xl max-h-[90vh] overflow-hidden flex flex-col rounded-lg shadow-2xl">
+            <DialogHeader className="pb-4 border-b border-gray-800">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
+                <FileCheck2 className="h-5 w-5 text-green-500" />
+                Bulk Upload Report - {bulkReport?.type?.toUpperCase()}
+              </DialogTitle>
+              <DialogDescription className="text-gray-400 mt-1">
+                Summary: <span className="text-green-500 font-semibold">{bulkReport?.counts.success} Saved</span>, 
+                <span className="text-yellow-500 font-semibold mx-2">{bulkReport?.counts.duplicate} Duplicates</span>, 
+                <span className="text-red-500 font-semibold">{bulkReport?.counts.error} Errors</span>
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex-1 overflow-auto mt-4 border border-gray-800 rounded-md">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-black text-gray-400 sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3 font-medium w-16 text-center border-b border-gray-800">Row</th>
+                    <th className="px-4 py-3 font-medium border-b border-gray-800">Item Name</th>
+                    <th className="px-4 py-3 font-medium w-24 text-center border-b border-gray-800">Status</th>
+                    <th className="px-4 py-3 font-medium border-b border-gray-800">Message</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800">
+                  {bulkReport?.items.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-3 text-gray-500 font-mono text-center">{item.row}</td>
+                      <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={item.name}>{item.name}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                          item.status === "Success" ? "bg-green-500/20 text-green-500" :
+                          item.status === "Duplicate" ? "bg-yellow-500/20 text-yellow-500" :
+                          "bg-red-500/20 text-red-500"
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 text-xs ${item.status === 'Error' ? 'text-red-400' : 'text-gray-400'}`}>
+                        {item.message || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!bulkReport || bulkReport.items.length === 0) && (
+                    <tr>
+                      <td colSpan="4" className="px-4 py-8 text-center text-gray-500 italic">
+                        No data available in this report.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <Button 
+                onClick={() => setReportDialog(false)} 
+                className="bg-[#e50914] hover:bg-[#b00710] text-white px-8 font-semibold shadow-lg transition-all active:scale-95"
+              >
+                Close Report
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Change Password Dialog */}
+        <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-md mx-auto rounded-lg shadow-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-white">Change Password</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <Label>Current Password</Label>
+                <div className="relative">
+                  <Input
+                    data-testid="current-password-input"
+                    type={showPassword ? "text" : "password"}
+                    value={passwordForm.current_password}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        current_password: e.target.value,
+                      })
+                    }
+                    required
+                    className="pr-10"
+                    placeholder="Enter current password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? (
+                      <EyeOff
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Eye
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label>New Password</Label>
+                <div className="relative">
+                  <Input
+                    data-testid="new-password-input"
+                    type={showNewPassword ? "text" : "password"}
+                    value={passwordForm.new_password}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        new_password: e.target.value,
+                      })
+                    }
+                    required
+                    className="pr-10"
+                    placeholder="Enter new password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Eye
+                        className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <Button
+                data-testid="change-password-submit-btn"
+                type="submit"
+                className="w-full bg-[#e50914] hover:bg-[#f40612]"
+              >
+                Change Password
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Sticky Search and Tabs Container */}
           <div className="sticky top-[52px] sm:top-[64px] z-40 bg-black/95 backdrop-blur-sm -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8 py-4 border-b border-gray-800">
@@ -1374,8 +2095,8 @@ const AdminDashboard = () => {
                                 <Search className="h-8 w-8 text-gray-600" />
                               </div>
                             )}
-                            <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1">{show.name}</h3>
-                            {show.description && <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2">{show.description}</p>}
+                            <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1 break-words">{show.name}</h3>
+                            {show.description && <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2 break-words">{show.description}</p>}
                             <div className="flex gap-2">
                               <Button onClick={() => handleEditShow(show)} variant="outline" size="sm" className="flex-1 text-xs">Edit</Button>
                               <Button onClick={() => handleDeleteShow(show.id)} variant="destructive" size="sm" className="flex-1 text-xs">Delete</Button>
@@ -1413,7 +2134,7 @@ const AdminDashboard = () => {
                           const showSeasons = filteredSeasons.filter(s => s.show_id === show.id);
                           return (
                             <div key={show.id} className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden">
-                              <h3 className="text-lg font-semibold mb-3 border-l-2 border-[#e50914] pl-3">{show.name}</h3>
+                              <h3 className="text-lg font-semibold mb-3 border-l-2 border-[#e50914] pl-3 break-words line-clamp-1">{truncateText(show.name, 100)}</h3>
                               <div className="space-y-2">
                                 {showSeasons.map((season) => (
                                   <div key={season.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 p-3 border border-gray-800 rounded-lg group hover:bg-black/40 transition-all">
@@ -1540,9 +2261,9 @@ const AdminDashboard = () => {
                                             />
                                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">Episode {episode.episode_number}</span>
                                           </div>
-                                          <h4 className="text-sm sm:text-base font-semibold mb-1 truncate">{episode.title || "Untitled Episode"}</h4>
-                                          {episode.description && <p className="text-xs text-gray-400 line-clamp-1 mb-1">{episode.description}</p>}
-                                          <p className="text-[10px] text-gray-500 truncate">URL: {episode.video_url}</p>
+                                          <h4 className="text-sm sm:text-base font-semibold mb-1 truncate break-words line-clamp-1">{episode.title || "Untitled Episode"}</h4>
+                                          {episode.description && <p className="text-xs text-gray-400 line-clamp-1 break-words mb-1">{episode.description}</p>}
+                                          <p className="text-[10px] text-gray-500 truncate">URL: {truncateText(episode.video_url, 20)}</p>
                                         </div>
                                         <div className="flex gap-2 flex-shrink-0">
                                           <Button onClick={() => handleEditEpisode(episode)} size="sm" variant="outline" className="h-8"><Edit className="h-3.5 w-3.5" /></Button>
@@ -1597,10 +2318,10 @@ const AdminDashboard = () => {
                                   }
                                 }}
                               />
-                              <h3 className="text-base font-semibold truncate flex-1">{movie.title}</h3>
+                              <h3 className="text-base font-semibold truncate flex-1 break-words">{movie.title}</h3>
                             </div>
                             {hasPoster ? (
-                               <img src={convertToDirectUrl(movie.poster_url)} alt={movie.title} className="w-full h-32 object-cover rounded mb-3" />
+                               <img src={convertToDirectUrl(movie.poster_url)} alt={truncateText(movie.title, 30)} className="w-full h-32 object-cover rounded mb-3" />
                             ) : (
                                <div className="w-full h-32 bg-gray-800 rounded mb-3 flex items-center justify-center">
                                  <Search className="h-8 w-8 text-gray-600" />
@@ -1622,37 +2343,29 @@ const AdminDashboard = () => {
 
           {/* Shows Tab */}
           <TabsContent value="shows" className="mt-4 sm:mt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
-                <h2 className="text-xl sm:text-2xl font-bold">Manage Shows</h2>
-                {bulkReport?.type === "shows" && (
-                  <Button
-                    onClick={() => setReportDialog(true)}
-                    variant="outline"
-                    size="sm"
-                    className="text-gray-400 hover:text-black h-8 sm:h-9"
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Report
-                  </Button>
-                )}
-              </div>
-              <Dialog
-                open={showDialog}
-                onOpenChange={(open) => {
-                  if (!open) handleCloseShowDialog();
-                  else setShowDialog(true);
-                }}
-              >
-                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
-                  <DialogTrigger asChild>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                  <h2 className="text-xl sm:text-2xl font-bold">Manage Shows</h2>
+                  {bulkReport?.type === "shows" && (
                     <Button
-                      data-testid="add-show-btn"
-                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                      onClick={() => setReportDialog(true)}
+                      variant="outline"
+                      size="sm"
+                      className="text-gray-400 hover:text-black h-8 sm:h-9"
                     >
-                      <Plus className="mr-2 h-4 w-4" /> Add Show
+                      <FileText className="mr-2 h-4 w-4" />
+                      View Report
                     </Button>
-                  </DialogTrigger>
+                  )}
+                </div>
+                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                  <Button
+                    data-testid="add-show-btn"
+                    onClick={() => setShowDialog(true)}
+                    className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                  >
+                    <Plus className="mr-2 h-4 w-4" /> Add Show
+                  </Button>
                   <Button
                     onClick={() => handleOpenBulkDialog("shows")}
                     variant="ghost"
@@ -1661,68 +2374,7 @@ const AdminDashboard = () => {
                     Bulk Upload
                   </Button>
                 </div>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
-                      {editingShow ? "Edit Show" : "Add New Show"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form
-                    onSubmit={editingShow ? handleUpdateShow : handleCreateShow}
-                    className="space-y-4"
-                  >
-                    <div>
-                      <Label>Show Name *</Label>
-                      <Input
-                        data-testid="show-name-input"
-                        value={showForm.name}
-                        onChange={(e) =>
-                          setShowForm({ ...showForm, name: e.target.value })
-                        }
-                        required
-                        placeholder="E.g. Stranger Things"
-                      />
-                    </div>
-                    <div>
-                      <Label>Description</Label>
-                      <Textarea
-                        data-testid="show-description-input"
-                        value={showForm.description}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            description: e.target.value,
-                          })
-                        }
-                        rows={3}
-                        placeholder="Brief description of the show..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Poster URL</Label>
-                      <Input
-                        data-testid="show-poster-input"
-                        value={showForm.poster_url}
-                        onChange={(e) =>
-                          setShowForm({
-                            ...showForm,
-                            poster_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://example.com/poster.jpg"
-                      />
-                    </div>
-                    <Button
-                      data-testid="create-show-btn"
-                      type="submit"
-                      className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                    >
-                      {editingShow ? "Update Show" : "Create Show"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
+              </div>
 
             {/* Responsive Show Cards Grid */}
             <div className="space-y-6">
@@ -1765,7 +2417,7 @@ const AdminDashboard = () => {
                           </div>
                         )}
 
-                        <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1" title={show.name}>
+                        <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1 break-words" title={show.name}>
                           {show.name}
                         </h3>
                         {show.description && (
@@ -1866,100 +2518,22 @@ const AdminDashboard = () => {
                         </Button>
                       )}
                     </div>
-                    <Dialog
-                      open={seasonDialog}
-                      onOpenChange={(open) => {
-                        if (!open) handleCloseSeasonDialog();
-                        else setSeasonDialog(true);
-                      }}
-                    >
-                      <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
-                        <DialogTrigger asChild>
-                          <Button
-                            data-testid="add-season-btn"
-                            className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
-                          >
-                            <Plus className="mr-2 h-4 w-4" /> Add Season
-                          </Button>
-                        </DialogTrigger>
-                        <Button
-                          onClick={() => handleOpenBulkDialog("seasons")}
-                          variant="ghost"
-                          className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
-                        >
-                          Bulk Upload
-                        </Button>
-                      </div>
-                      <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
-                        <DialogHeader>
-                          <DialogTitle className="text-lg sm:text-xl">
-                            {editingSeason ? "Edit Season" : "Add New Season"}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <form
-                          onSubmit={
-                            editingSeason ? handleUpdateSeason : handleCreateSeason
-                          }
-                          className="space-y-4"
-                        >
-                          <div>
-                            <Label>Select Show *</Label>
-                            <Select
-                              value={seasonForm.show_id}
-                              onValueChange={(value) =>
-                                setSeasonForm({ ...seasonForm, show_id: value })
-                              }
-                              required
-                            >
-                              <SelectTrigger data-testid="season-show-select" className="w-full">
-                                <SelectValue placeholder="Select a show" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {shows.map((show) => (
-                                  <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
-                                    {truncateText(show.name, 40)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Season Number *</Label>
-                            <Input
-                              data-testid="season-number-input"
-                              type="number"
-                              value={seasonForm.season_number}
-                              onChange={(e) =>
-                                setSeasonForm({
-                                  ...seasonForm,
-                                  season_number: e.target.value,
-                                })
-                              }
-                              required
-                              placeholder="1, 2, 3..."
-                            />
-                          </div>
-                          <div>
-                            <Label>Season Name (Optional)</Label>
-                            <Input
-                              data-testid="season-name-input"
-                              value={seasonForm.name}
-                              onChange={(e) =>
-                                setSeasonForm({ ...seasonForm, name: e.target.value })
-                              }
-                              placeholder="E.g. Season 1: The Beginning"
-                            />
-                          </div>
-                          <Button
-                            data-testid="create-season-btn"
-                            type="submit"
-                            className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                          >
-                            {editingSeason ? "Update Season" : "Create Season"}
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                    <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                      <Button
+                        data-testid="add-season-btn"
+                        onClick={() => setSeasonDialog(true)}
+                        className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                      >
+                        <Plus className="mr-2 h-4 w-4" /> Add Season
+                      </Button>
+                      <Button
+                        onClick={() => handleOpenBulkDialog("seasons")}
+                        variant="ghost"
+                        className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                      >
+                        Bulk Upload
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-6">
@@ -1978,8 +2552,8 @@ const AdminDashboard = () => {
                                 key={show.id}
                                 className="bg-[#1a1a1a] border border-gray-800 rounded-lg p-3 sm:p-4 overflow-hidden"
                               >
-                                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1" title={show.name}>
-                                  {show.name}
+                                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 line-clamp-1 break-words" title={show.name}>
+                                  {truncateText(show.name, 50)}
                                 </h3>
                                 <div className="space-y-2">
                                   {showSeasons.map((season) => (
@@ -2105,197 +2679,28 @@ const AdminDashboard = () => {
                         setSelectedEpisodes([...new Set([...selectedEpisodes, ...pageItems])]);
                       }
                     }}
-                    className="text-xs text-gray-400 hover:text-black"
+                    className="text-xs text-gray-400 hover:text-black text-[13px]"
                   >
                     {episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).length > 0 && episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).every(e => selectedEpisodes.includes(e.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
                 )}
               </div>
-              <Dialog
-                open={episodeDialog}
-                onOpenChange={(open) => {
-                  if (!open) handleCloseEpisodeDialog();
-                  else setEpisodeDialog(true);
-                }}
-              >
-                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
-                  <DialogTrigger asChild>
-                    <Button
-                      data-testid="add-episode-btn"
-                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Add Episode
-                    </Button>
-                  </DialogTrigger>
-                  <Button
-                    onClick={() => handleOpenBulkDialog("episodes")}
-                    variant="ghost"
-                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
-                  >
-                    Bulk Upload
-                  </Button>
-                </div>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
-                      {editingEpisode ? "Edit Episode" : "Add New Episode"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form
-                    onSubmit={
-                      editingEpisode ? handleUpdateEpisode : handleCreateEpisode
-                    }
-                    className="space-y-4"
-                  >
-                    <div>
-                      <Label>Select Show *</Label>
-                      <Select
-                        value={episodeForm.show_id}
-                        onValueChange={(value) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            show_id: value,
-                            season_id: "",
-                          })
-                        }
-                        required
-                      >
-                        <SelectTrigger data-testid="episode-show-select" className="w-full">
-                          <SelectValue placeholder="Select a show" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
-                              {truncateText(show.name, 40)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Select Season *</Label>
-                      <Select
-                        value={episodeForm.season_id}
-                        onValueChange={(value) =>
-                          setEpisodeForm({ ...episodeForm, season_id: value })
-                        }
-                        required
-                        disabled={!episodeForm.show_id}
-                      >
-                        <SelectTrigger data-testid="episode-season-select" className="w-full">
-                          <SelectValue placeholder="Select a season" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getSeasonsByShow(episodeForm.show_id).map(
-                            (season) => (
-                              <SelectItem key={season.id} value={season.id} className="truncate" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
-                                Season {season.season_number}
-                                {season.name && ` - ${truncateText(season.name, 30)}`}
-                              </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Episode Number *</Label>
-                      <Input
-                        data-testid="episode-number-input"
-                        type="number"
-                        value={episodeForm.episode_number}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            episode_number: e.target.value,
-                          })
-                        }
-                        required
-                        placeholder="1, 2, 3..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Episode Title (Optional)</Label>
-                      <Input
-                        data-testid="episode-title-input"
-                        value={episodeForm.title}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            title: e.target.value,
-                          })
-                        }
-                        placeholder="E.g. Chapter One: The Vanishing of Will Byers"
-                      />
-                    </div>
-                    <div>
-                      <Label>Video URL *</Label>
-                      <Input
-                        data-testid="episode-video-url-input"
-                        value={episodeForm.video_url}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            video_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Description</Label>
-                      <Textarea
-                        data-testid="episode-description-input"
-                        value={episodeForm.description}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            description: e.target.value,
-                          })
-                        }
-                        rows={3}
-                        placeholder="Episode summary..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Duration (in minutes)</Label>
-                      <Input
-                        data-testid="episode-duration-input"
-                        type="number"
-                        value={episodeForm.duration}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            duration: e.target.value,
-                          })
-                        }
-                        placeholder="45"
-                      />
-                    </div>
-                    <div>
-                      <Label>Thumbnail URL</Label>
-                      <Input
-                        data-testid="episode-thumbnail-input"
-                        value={episodeForm.thumbnail_url}
-                        onChange={(e) =>
-                          setEpisodeForm({
-                            ...episodeForm,
-                            thumbnail_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <Button
-                      data-testid="create-episode-btn"
-                      type="submit"
-                      className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                    >
-                      {editingEpisode ? "Update Episode" : "Create Episode"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                <Button
+                  data-testid="add-episode-btn"
+                  onClick={() => setEpisodeDialog(true)}
+                  className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Episode
+                </Button>
+                <Button
+                  onClick={() => handleOpenBulkDialog("episodes")}
+                  variant="ghost"
+                  className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                >
+                  Bulk Upload
+                </Button>
+              </div>
             </div>
             {/* Episode mapping */}
             <div className="space-y-6">
@@ -2330,7 +2735,7 @@ const AdminDashboard = () => {
                               </p>
                             </div>
                             <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
-                              Episode {episode.episode_number}: {truncateText(episode.title, 50)}
+                              Episode {episode.episode_number}: {truncateText(episode.title, 50)/*foundinggggggggg */}
                             </h3>
                             {episode.description && (
                               <p className="text-xs sm:text-sm text-gray-400 mb-2 break-words line-clamp-2">
@@ -2440,166 +2845,28 @@ const AdminDashboard = () => {
                         setSelectedMovies([...new Set([...selectedMovies, ...pageItems])]);
                       }
                     }}
-                    className="text-xs text-gray-400 hover:text-black"
+                    className="text-xs text-gray-400 hover:text-black text-[13px]"
                   >
                     {movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).length > 0 && movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).every(m => selectedMovies.includes(m.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
                 )}
               </div>
-              <Dialog
-                open={movieDialog}
-                onOpenChange={(open) => {
-                  if (!open) handleCloseMovieDialog();
-                  else setMovieDialog(true);
-                }}
-              >
-                <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
-                  <DialogTrigger asChild>
-                    <Button
-                      data-testid="add-movie-btn"
-                      className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Add Movie
-                    </Button>
-                  </DialogTrigger>
-                  <Button
-                    onClick={() => handleOpenBulkDialog("movies")}
-                    variant="ghost"
-                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
-                  >
-                    Bulk Upload
-                  </Button>
-                </div>
-                <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl">
-                      {editingMovie ? "Edit Movie" : "Add New Movie"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form
-                    onSubmit={
-                      editingMovie ? handleUpdateMovie : handleCreateMovie
-                    }
-                    className="space-y-4"
-                  >
-                    <div>
-                      <Label>Select Show</Label>
-                      <Select
-                        value={movieForm.show_id || "none"}
-                        onValueChange={(value) =>
-                          setMovieForm({
-                            ...movieForm,
-                            show_id: value === "none" ? "" : value,
-                          })
-                        }
-                      >
-                        <SelectTrigger data-testid="movie-show-select" className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Single Movie</SelectItem>
-                          {shows.map((show) => (
-                            <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
-                              {truncateText(show.name, 40)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Label className="mt-4 mb-1 block">Movie Title *</Label>
-                      <Input
-                        data-testid="movie-title-input"
-                        value={movieForm.title}
-                        onChange={(e) =>
-                          setMovieForm({ ...movieForm, title: e.target.value })
-                        }
-                        required
-                        placeholder="E.g. Inception"
-                      />
-                    </div>
-                    <div>
-                      <Label>Video URL *</Label>
-                      <Input
-                        data-testid="movie-video-url-input"
-                        value={movieForm.video_url}
-                        onChange={(e) =>
-                          setMovieForm({
-                            ...movieForm,
-                            video_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Description</Label>
-                      <Textarea
-                        data-testid="movie-description-input"
-                        value={movieForm.description}
-                        onChange={(e) =>
-                          setMovieForm({
-                            ...movieForm,
-                            description: e.target.value,
-                          })
-                        }
-                        rows={3}
-                        placeholder="Movie summary..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Duration (in minutes)</Label>
-                      <Input
-                        data-testid="movie-duration-input"
-                        type="number"
-                        value={movieForm.duration}
-                        onChange={(e) =>
-                          setMovieForm({
-                            ...movieForm,
-                            duration: e.target.value,
-                          })
-                        }
-                        placeholder="120"
-                      />
-                    </div>
-                    <div>
-                      <Label>Thumbnail URL</Label>
-                      <Input
-                        data-testid="movie-thumbnail-input"
-                        value={movieForm.thumbnail_url}
-                        onChange={(e) =>
-                          setMovieForm({
-                            ...movieForm,
-                            thumbnail_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <div>
-                      <Label>Poster URL</Label>
-                      <Input
-                        data-testid="movie-poster-input"
-                        value={movieForm.poster_url}
-                        onChange={(e) =>
-                          setMovieForm({
-                            ...movieForm,
-                            poster_url: e.target.value,
-                          })
-                        }
-                        placeholder="https://..."
-                      />
-                    </div>
-                    <Button
-                      data-testid="create-movie-btn"
-                      type="submit"
-                      className="w-full bg-[#e50914] hover:bg-[#f40612]"
-                    >
-                      {editingMovie ? "Update Movie" : "Create Movie"}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <div className="flex bg-[#1a1a1a] p-1 rounded-lg border border-gray-800 shadow-sm w-full sm:w-auto">
+                <Button
+                  data-testid="add-movie-btn"
+                  onClick={() => setMovieDialog(true)}
+                  className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Movie
+                </Button>
+                <Button
+                  onClick={() => handleOpenBulkDialog("movies")}
+                  variant="ghost"
+                  className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                >
+                  Bulk Upload
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -2632,7 +2899,7 @@ const AdminDashboard = () => {
                                 {show?.name || "Single Movie"}
                               </p>
                             </div>
-                            <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={movie.title}>
+                            <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words line-clamp-1" title={movie.title}>
                               {truncateText(movie.title, 60)}
                             </h3>
                             {movie.description && (
@@ -2704,333 +2971,6 @@ const AdminDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Change Password Dialog */}
-      <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
-        <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
-          <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">Change Password</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <Label>Current Password</Label>
-              <div className="relative">
-                <Input
-                  data-testid="current-password-input"
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={passwordForm.current_password}
-                  onChange={(e) =>
-                    setPasswordForm({
-                      ...passwordForm,
-                      current_password: e.target.value,
-                    })
-                  }
-                  required
-                  className="pr-10"
-                  placeholder="Enter current password"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-                  onClick={() => setShowCurrentPassword((prev) => !prev)}
-                >
-                  {showCurrentPassword ? (
-                    <EyeOff
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Eye
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <div>
-              <Label>New Password</Label>
-              <div className="relative">
-                <Input
-                  data-testid="new-password-input"
-                  type={showNewPassword ? "text" : "password"}
-                  value={passwordForm.new_password}
-                  onChange={(e) =>
-                    setPasswordForm({
-                      ...passwordForm,
-                      new_password: e.target.value,
-                    })
-                  }
-                  required
-                  className="pr-10"
-                  placeholder="Enter new password"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
-                  onClick={() => setShowNewPassword((prev) => !prev)}
-                >
-                  {showNewPassword ? (
-                    <EyeOff
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Eye
-                      className="h-4 w-4 text-gray-500 group-hover:text-white transition-colors"
-                      aria-hidden="true"
-                    />
-                  )}
-                </Button>
-              </div>
-            </div>
-            <Button
-              data-testid="change-password-submit-btn"
-              type="submit"
-              className="w-full bg-[#e50914] hover:bg-[#f40612]"
-            >
-              Change Password
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Upload Dialog */}
-      <Dialog open={bulkDialog} onOpenChange={(open) => !open && handleCloseBulkDialog()}>
-        <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg shadow-2xl">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-xl font-bold text-[#e50914] capitalize">
-              Bulk Upload {bulkType}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleBulkUpload} className="space-y-6">
-            {bulkType === "seasons" && (
-              <div className="space-y-2">
-                <Label className="text-gray-300">Select Show *</Label>
-                <Select
-                  value={bulkForm.show_id}
-                  onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value })}
-                  required
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a show" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {shows.map((show) => (
-                      <SelectItem key={show.id} value={show.id}>
-                        {show.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {bulkType === "episodes" && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-300">Select Show *</Label>
-                  <Select
-                    value={bulkForm.show_id}
-                    onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value, season_id: "" })}
-                    required
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a show" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {shows.map((show) => (
-                        <SelectItem key={show.id} value={show.id}>
-                          {show.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-gray-300">Select Season *</Label>
-                  <Select
-                    value={bulkForm.season_id}
-                    onValueChange={(value) => setBulkForm({ ...bulkForm, season_id: value })}
-                    required
-                    disabled={!bulkForm.show_id}
-                  >
-                    <SelectTrigger className="w-full disabled:opacity-50">
-                      <SelectValue placeholder="Select a season" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getSeasonsByShow(bulkForm.show_id).map((season) => (
-                        <SelectItem key={season.id} value={season.id}>
-                          Season {season.season_number} {season.name && `- ${season.name}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-            {bulkType === "movies" && (
-              <div className="space-y-2">
-                <Label className="text-gray-300">Select Show (Optional)</Label>
-                <Select
-                  value={bulkForm.show_id || "none"}
-                  onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a show or Single Movie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Single Movie</SelectItem>
-                    {shows.map((show) => (
-                      <SelectItem key={show.id} value={show.id}>
-                        {show.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <Label className="text-gray-300">Select Excel File *</Label>
-                {bulkLoading && <span className="text-xs font-medium text-[#e50914] animate-pulse">{uploadProgress}% Complete</span>}
-              </div>
-              <Input
-                type="file"
-                accept=".xlsx, .xls"
-                onChange={(e) => setBulkFile(e.target.files[0])}
-                required
-                disabled={bulkLoading}
-                className="mt-1 h-auto p-1.5 bg-[#2a2a2a] border-gray-700 text-gray-300 file:bg-[#3d3d3d] file:text-white file:border-0 file:rounded-md file:px-4 file:py-1.5 file:mr-4 file:cursor-pointer hover:file:bg-[#4d4d4d] transition-all disabled:opacity-50"
-              />
-
-              {bulkLoading && (
-                <div className="space-y-2 pt-2">
-                  <Progress value={uploadProgress} className="h-2 bg-gray-800" />
-                </div>
-              )}
-
-              <div className="bg-[#2a2a2a]/50 p-4 rounded-md border border-gray-800 mt-2">
-                <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">Required Columns (Flexible Matching):</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {bulkType === "shows" && (
-                    <>
-                      <div className="text-[11px] text-gray-400 text-left">• name / title</div>
-                      <div className="text-[11px] text-gray-400 text-left">• description</div>
-                      <div className="text-[11px] text-gray-400 text-left col-span-2">• poster_url</div>
-                    </>
-                  )}
-                  {bulkType === "seasons" && (
-                    <>
-                      <div className="text-[11px] text-gray-400 text-left">• season_number</div>
-                      <div className="text-[11px] text-gray-400 text-left">• name / title</div>
-                    </>
-                  )}
-                  {bulkType === "episodes" && (
-                    <>
-                      <div className="text-[11px] text-gray-400 text-left">• episode_number</div>
-                      <div className="text-[11px] text-gray-400 text-left">• title / name</div>
-                      <div className="text-[11px] text-gray-400 text-left">• video_url</div>
-                      <div className="text-[11px] text-gray-400 text-left">• duration</div>
-                    </>
-                  )}
-                  {bulkType === "movies" && (
-                    <>
-                      <div className="text-[11px] text-gray-400 text-left">• title / name</div>
-                      <div className="text-[11px] text-gray-400 text-left">• video_url</div>
-                      <div className="text-[11px] text-gray-400 text-left">• poster_url</div>
-                      <div className="text-[11px] text-gray-400 text-left">• duration</div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <Button
-              type="submit"
-              className="w-full bg-[#e50914] hover:bg-[#b00710] text-white font-bold h-12 rounded-md shadow-lg transition-all active:scale-[0.98]"
-              disabled={bulkLoading}
-            >
-              {bulkLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Processing...</span>
-                </div>
-              ) : (
-                "Upload & Save"
-              )}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bulk Report Dialog */}
-      <Dialog open={reportDialog} onOpenChange={setReportDialog}>
-        <DialogContent className="bg-[#1a1a1a] text-white border-gray-800 max-w-4xl max-h-[90vh] overflow-hidden flex flex-col rounded-lg shadow-2xl">
-          <DialogHeader className="pb-4 border-b border-gray-800">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-white">
-              <FileCheck2 className="h-5 w-5 text-green-500" />
-              Bulk Upload Report - {bulkReport?.type?.toUpperCase()}
-            </DialogTitle>
-            <DialogDescription className="text-gray-400 mt-1">
-              Summary: <span className="text-green-500 font-semibold">{bulkReport?.counts.success} Saved</span>, 
-              <span className="text-yellow-500 font-semibold mx-2">{bulkReport?.counts.duplicate} Duplicates</span>, 
-              <span className="text-red-500 font-semibold">{bulkReport?.counts.error} Errors</span>
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-auto mt-4 border border-gray-800 rounded-md">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-black text-gray-400 sticky top-0">
-                <tr>
-                  <th className="px-4 py-3 font-medium w-16 text-center border-b border-gray-800">Row</th>
-                  <th className="px-4 py-3 font-medium border-b border-gray-800">Item Name</th>
-                  <th className="px-4 py-3 font-medium w-24 text-center border-b border-gray-800">Status</th>
-                  <th className="px-4 py-3 font-medium border-b border-gray-800">Message</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {bulkReport?.items.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-white/5 transition-colors">
-                    <td className="px-4 py-3 text-gray-500 font-mono text-center">{item.row}</td>
-                    <td className="px-4 py-3 font-medium truncate max-w-[200px]" title={item.name}>{item.name}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        item.status === "Success" ? "bg-green-500/20 text-green-500" :
-                        item.status === "Duplicate" ? "bg-yellow-500/20 text-yellow-500" :
-                        "bg-red-500/20 text-red-500"
-                      }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className={`px-4 py-3 text-xs ${item.status === 'Error' ? 'text-red-400' : 'text-gray-400'}`}>
-                      {item.message || "-"}
-                    </td>
-                  </tr>
-                ))}
-                {(!bulkReport || bulkReport.items.length === 0) && (
-                  <tr>
-                    <td colSpan="4" className="px-4 py-8 text-center text-gray-500 italic">
-                      No data available in this report.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="mt-6 flex justify-end">
-            <Button 
-              onClick={() => setReportDialog(false)} 
-              className="bg-[#e50914] hover:bg-[#b00710] text-white px-8 font-semibold shadow-lg transition-all active:scale-95"
-            >
-              Close Report
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
