@@ -164,7 +164,7 @@ const ShowDetailPage = () => {
             </div>
 
             {show.description && (
-              <p className="text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md line-clamp-3 break-all sm:break-words leading-relaxed w-full">
+              <p className="text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md line-clamp-5 break-all sm:break-words leading-relaxed w-full">
                 {show.description}
               </p>
             )}
@@ -275,7 +275,7 @@ const ShowDetailPage = () => {
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (
-                      <div className="mt-8 mb-4">
+                      <div className="mt-8 mb-1">
                         <Pagination>
                           <PaginationContent className="flex-wrap justify-center border-gray-800">
                             <PaginationItem>
