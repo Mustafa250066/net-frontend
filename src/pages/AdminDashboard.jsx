@@ -1360,12 +1360,15 @@ const AdminDashboard = () => {
                   data-testid="season-number-input"
                   type="number"
                   value={seasonForm.season_number}
-                  onChange={(e) =>
-                    setSeasonForm({
-                      ...seasonForm,
-                      season_number: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 12) {
+                      setSeasonForm({
+                        ...seasonForm,
+                        season_number: value,
+                      });
+                    }
+                  }}
                   required
                   placeholder="1, 2, 3..."
                 />
@@ -1467,12 +1470,15 @@ const AdminDashboard = () => {
                   data-testid="episode-number-input"
                   type="number"
                   value={episodeForm.episode_number}
-                  onChange={(e) =>
-                    setEpisodeForm({
-                      ...episodeForm,
-                      episode_number: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 12) {
+                      setEpisodeForm({
+                        ...episodeForm,
+                        episode_number: value,
+                      });
+                    }
+                  }}
                   required
                   placeholder="1, 2, 3..."
                 />
@@ -1527,12 +1533,15 @@ const AdminDashboard = () => {
                   data-testid="episode-duration-input"
                   type="number"
                   value={episodeForm.duration}
-                  onChange={(e) =>
-                    setEpisodeForm({
-                      ...episodeForm,
-                      duration: e.target.value,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 12) {
+                      setEpisodeForm({
+                        ...episodeForm,
+                        duration: value,
+                      });
+                    }
+                  }}
                   placeholder="45"
                 />
               </div>
@@ -1652,9 +1661,12 @@ const AdminDashboard = () => {
                   data-testid="movie-duration-input"
                   type="number"
                   value={movieForm.duration}
-                  onChange={(e) =>
-                    setMovieForm({ ...movieForm, duration: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 12) {
+                      setMovieForm({ ...movieForm, duration: value });
+                    }
+                  }}
                   placeholder="120"
                 />
               </div>
@@ -1719,8 +1731,8 @@ const AdminDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {shows.map((show) => (
-                        <SelectItem key={show.id} value={show.id}>
-                          {show.name}
+                        <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                          {truncateText(show.name, 40)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1741,8 +1753,8 @@ const AdminDashboard = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {shows.map((show) => (
-                          <SelectItem key={show.id} value={show.id}>
-                            {show.name}
+                          <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                            {truncateText(show.name, 40)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1756,13 +1768,13 @@ const AdminDashboard = () => {
                       required
                       disabled={!bulkForm.show_id}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full disabled:opacity-50">
                         <SelectValue placeholder="Select a season" />
                       </SelectTrigger>
                       <SelectContent>
                         {getSeasonsByShow(bulkForm.show_id).map((season) => (
-                          <SelectItem key={season.id} value={season.id}>
-                            Season {season.season_number} {season.name && `- ${season.name}`}
+                          <SelectItem key={season.id} value={season.id} className="truncate" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
+                            Season {season.season_number} {season.name && `- ${truncateText(season.name, 30)}`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1770,19 +1782,79 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label className="text-gray-300">Excel File (.xlsx) *</Label>
-                <div className="relative group">
-                  <Input
-                    type="file"
-                    accept=".xlsx"
-                    onChange={(e) => setBulkFile(e.target.files[0])}
-                    required
-                    className="bg-black border-gray-700 focus:border-[#e50914] h-12 pt-2 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#e50914] file:text-white hover:file:bg-[#b00710] cursor-pointer"
-                  />
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500 bg-black/50 p-2 rounded border border-gray-800">
-                    <span className="flex items-center gap-1"><Info className="h-3 w-3" /> Use standard templates</span>
-                    {uploadProgress > 0 && <span className="text-[#e50914] font-bold">{uploadProgress}% uploaded</span>}
+              {bulkType === "movies" && (
+                <div className="space-y-2">
+                  <Label className="text-gray-300">Select Show (Optional)</Label>
+                  <Select
+                    value={bulkForm.show_id || "none"}
+                    onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a show or Single Movie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Standalone Movie</SelectItem>
+                      {shows.map((show) => (
+                        <SelectItem key={show.id} value={show.id} className="truncate" title={show.name}>
+                          {truncateText(show.name, 40)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-4">
+                <div className="flex justify-between items-end">
+                  <Label className="text-gray-300">Select Excel File *</Label>
+                  {bulkLoading && <span className="text-xs font-medium text-[#e50914] animate-pulse">{uploadProgress}% Complete</span>}
+                </div>
+                <Input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={(e) => setBulkFile(e.target.files[0])}
+                  required
+                  disabled={bulkLoading}
+                  className="mt-1 h-auto p-1.5 bg-[#2a2a2a] border-gray-700 text-gray-300 file:bg-[#3d3d3d] file:text-white file:border-0 file:rounded-md file:px-4 file:py-1.5 file:mr-4 file:cursor-pointer hover:file:bg-[#4d4d4d] transition-all disabled:opacity-50"
+                />
+
+                {bulkLoading && (
+                  <div className="space-y-2 pt-2">
+                    <Progress value={uploadProgress} className="h-2 bg-gray-800" />
+                  </div>
+                )}
+
+                <div className="bg-[#2a2a2a]/50 p-4 rounded-md border border-gray-800 mt-2">
+                  <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 text-center">Required Columns (Flexible Matching):</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {bulkType === "shows" && (
+                      <>
+                        <div className="text-[11px] text-gray-400 text-left">• name / title</div>
+                        <div className="text-[11px] text-gray-400 text-left">• description</div>
+                        <div className="text-[11px] text-gray-400 text-left col-span-2">• poster_url</div>
+                      </>
+                    )}
+                    {bulkType === "seasons" && (
+                      <>
+                        <div className="text-[11px] text-gray-400 text-left">• season_number</div>
+                        <div className="text-[11px] text-gray-400 text-left">• name / title</div>
+                      </>
+                    )}
+                    {bulkType === "episodes" && (
+                      <>
+                        <div className="text-[11px] text-gray-400 text-left">• episode_number</div>
+                        <div className="text-[11px] text-gray-400 text-left">• title / name</div>
+                        <div className="text-[11px] text-gray-400 text-left">• video_url</div>
+                        <div className="text-[11px] text-gray-400 text-left">• duration</div>
+                      </>
+                    )}
+                    {bulkType === "movies" && (
+                      <>
+                        <div className="text-[11px] text-gray-400 text-left">• title / name</div>
+                        <div className="text-[11px] text-gray-400 text-left">• video_url</div>
+                        <div className="text-[11px] text-gray-400 text-left">• poster_url</div>
+                        <div className="text-[11px] text-gray-400 text-left">• duration</div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
