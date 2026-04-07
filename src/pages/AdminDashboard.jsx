@@ -1725,7 +1725,7 @@ const AdminDashboard = () => {
                 Bulk Upload {bulkType}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleBulkUpload} className="space-y-6">
+            <form onSubmit={handleBulkUpload} className="space-y-6 max-w-full overflow-hidden">
               {bulkType === "seasons" && (
                 <div className="space-y-2">
                   <Label className="text-gray-300">Select Show *</Label>
@@ -1734,7 +1734,7 @@ const AdminDashboard = () => {
                     onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value })}
                     required
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full overflow-hidden">
                       <div className="truncate text-left w-full">
                         <SelectValue placeholder="Select a show" />
                       </div>
@@ -1758,7 +1758,7 @@ const AdminDashboard = () => {
                       onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value, season_id: "" })}
                       required
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="w-full overflow-hidden">
                         <div className="truncate text-left w-full">
                           <SelectValue placeholder="Select a show" />
                         </div>
@@ -1780,7 +1780,7 @@ const AdminDashboard = () => {
                       required
                       disabled={!bulkForm.show_id}
                     >
-                      <SelectTrigger className="w-full disabled:opacity-50">
+                      <SelectTrigger className="w-full disabled:opacity-50 overflow-hidden">
                         <div className="truncate text-left w-full">
                           <SelectValue placeholder="Select a season" />
                         </div>
@@ -1803,7 +1803,7 @@ const AdminDashboard = () => {
                     value={bulkForm.show_id || "none"}
                     onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full overflow-hidden">
                       <div className="truncate text-left w-full">
                         <SelectValue placeholder="Select a show or Single Movie" />
                       </div>
