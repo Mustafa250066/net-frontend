@@ -1252,7 +1252,7 @@ const AdminDashboard = () => {
             else setShowDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingShow ? "Edit Show" : "Add New Show"}
@@ -1260,7 +1260,7 @@ const AdminDashboard = () => {
             </DialogHeader>
             <form
               onSubmit={editingShow ? handleUpdateShow : handleCreateShow}
-              className="space-y-4"
+              className="space-y-4 max-w-full overflow-hidden"
             >
               <div>
                 <Label>Show Name *</Label>
@@ -1321,7 +1321,7 @@ const AdminDashboard = () => {
             else setSeasonDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg">
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingSeason ? "Edit Season" : "Add New Season"}
@@ -1331,7 +1331,7 @@ const AdminDashboard = () => {
               onSubmit={
                 editingSeason ? handleUpdateSeason : handleCreateSeason
               }
-              className="space-y-4"
+              className="space-y-4 max-w-full overflow-hidden"
             >
               <div>
                 <Label>Select Show *</Label>
@@ -1343,7 +1343,9 @@ const AdminDashboard = () => {
                   required
                 >
                   <SelectTrigger data-testid="season-show-select" className="w-full">
-                    <SelectValue placeholder="Select a show" />
+                    <div className="truncate text-left w-full">
+                      <SelectValue placeholder="Select a show" />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {shows.map((show) => (
@@ -1402,7 +1404,7 @@ const AdminDashboard = () => {
             else setEpisodeDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingEpisode ? "Edit Episode" : "Add New Episode"}
@@ -1412,7 +1414,7 @@ const AdminDashboard = () => {
               onSubmit={
                 editingEpisode ? handleUpdateEpisode : handleCreateEpisode
               }
-              className="space-y-4"
+              className="space-y-4 max-w-full overflow-hidden"
             >
               <div>
                 <Label>Select Show *</Label>
@@ -1428,7 +1430,9 @@ const AdminDashboard = () => {
                   required
                 >
                   <SelectTrigger data-testid="episode-show-select" className="w-full">
-                    <SelectValue placeholder="Select a show" />
+                    <div className="truncate text-left w-full">
+                      <SelectValue placeholder="Select a show" />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {shows.map((show) => (
@@ -1450,7 +1454,9 @@ const AdminDashboard = () => {
                   disabled={!episodeForm.show_id}
                 >
                   <SelectTrigger data-testid="episode-season-select" className="w-full">
-                    <SelectValue placeholder="Select a season" />
+                    <div className="truncate text-left w-full">
+                      <SelectValue placeholder="Select a season" />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     {getSeasonsByShow(episodeForm.show_id).map(
@@ -1577,7 +1583,7 @@ const AdminDashboard = () => {
             else setMovieDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg">
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingMovie ? "Edit Movie" : "Add New Movie"}
@@ -1587,7 +1593,7 @@ const AdminDashboard = () => {
               onSubmit={
                 editingMovie ? handleUpdateMovie : handleCreateMovie
               }
-              className="space-y-4"
+              className="space-y-4 max-w-full overflow-hidden"
             >
               <div>
                 <Label>Select Show</Label>
@@ -1601,7 +1607,9 @@ const AdminDashboard = () => {
                   }
                 >
                   <SelectTrigger data-testid="movie-show-select" className="w-full">
-                    <SelectValue />
+                    <div className="truncate text-left w-full">
+                      <SelectValue />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Standalone Movie</SelectItem>
@@ -1711,7 +1719,7 @@ const AdminDashboard = () => {
 
         {/* Bulk Upload Dialog */}
         <Dialog open={bulkDialog} onOpenChange={(open) => !open && handleCloseBulkDialog()}>
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-lg mx-auto rounded-lg shadow-2xl">
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg shadow-2xl overflow-hidden">
             <DialogHeader className="mb-4">
               <DialogTitle className="text-xl font-bold text-[#e50914] capitalize">
                 Bulk Upload {bulkType}
@@ -1727,7 +1735,9 @@ const AdminDashboard = () => {
                     required
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a show" />
+                      <div className="truncate text-left w-full">
+                        <SelectValue placeholder="Select a show" />
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       {shows.map((show) => (
@@ -1749,7 +1759,9 @@ const AdminDashboard = () => {
                       required
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a show" />
+                        <div className="truncate text-left w-full">
+                          <SelectValue placeholder="Select a show" />
+                        </div>
                       </SelectTrigger>
                       <SelectContent>
                         {shows.map((show) => (
@@ -1769,7 +1781,9 @@ const AdminDashboard = () => {
                       disabled={!bulkForm.show_id}
                     >
                       <SelectTrigger className="w-full disabled:opacity-50">
-                        <SelectValue placeholder="Select a season" />
+                        <div className="truncate text-left w-full">
+                          <SelectValue placeholder="Select a season" />
+                        </div>
                       </SelectTrigger>
                       <SelectContent>
                         {getSeasonsByShow(bulkForm.show_id).map((season) => (
@@ -1790,7 +1804,9 @@ const AdminDashboard = () => {
                     onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a show or Single Movie" />
+                      <div className="truncate text-left w-full">
+                        <SelectValue placeholder="Select a show or Single Movie" />
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Standalone Movie</SelectItem>
