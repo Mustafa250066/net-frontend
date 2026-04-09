@@ -328,6 +328,11 @@ const AdminDashboard = () => {
   // Season Operations
   const handleCreateSeason = async (e) => {
     e.preventDefault();
+
+    if (!seasonForm.show_id) {
+      toast.error("Please select a show before creating the season.");
+      return;
+    }
     const seasonNumber = parseInt(seasonForm.season_number);
     if (isNaN(seasonNumber) || seasonNumber <= 0) {
       toast.error("Season number must be a positive number");
@@ -397,6 +402,11 @@ const AdminDashboard = () => {
 
   const handleUpdateSeason = async (e) => {
     e.preventDefault();
+
+    if (!seasonForm.show_id) {
+      toast.error("Please select a show before updating the season.");
+      return;
+    }
     const seasonNumber = parseInt(seasonForm.season_number);
     if (isNaN(seasonNumber) || seasonNumber <= 0) {
       toast.error("Season number must be a positive number");
@@ -816,6 +826,23 @@ const AdminDashboard = () => {
     if (!bulkFile) {
       toast.error("Please select an Excel file");
       return;
+    }
+
+    // Validation for dropdowns
+    if (bulkType === "seasons") {
+      if (!bulkForm.show_id) {
+        toast.error("Please select a show for bulk upload");
+        return;
+      }
+    } else if (bulkType === "episodes") {
+      if (!bulkForm.show_id) {
+        toast.error("Please select a show first");
+        return;
+      }
+      if (!bulkForm.season_id) {
+        toast.error("Please select a season for bulk upload");
+        return;
+      }
     }
 
     setBulkLoading(true);
