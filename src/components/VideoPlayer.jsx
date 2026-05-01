@@ -39,7 +39,7 @@ export default function VideoPlayer({ url }) {
 
 
   return (
-    <div className="relative w-full aspect-video bg-black overflow-hidden sm:rounded-xl shadow-2xl">
+    <div className="relative w-full pt-[56.25%] bg-black overflow-hidden sm:rounded-xl shadow-2xl shrink-0">
       <iframe
         src={getEmbedUrl(url)}
         className="absolute top-0 left-0 w-full h-full border-0"

@@ -220,8 +220,9 @@ const VideoPlayerPage = () => {
         )}
       </h2>
 
-      <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto my-0 sm:my-12 px-0 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto my-6 sm:my-12 py-2 sm:py-6 px-0 sm:px-6 lg:px-8">
+
+        <div className="w-full">
           <VideoPlayer
             key={episodeId}
             ref={videoRef}
@@ -233,7 +234,7 @@ const VideoPlayerPage = () => {
 
         {/* Navigation Buttons */}
         {type !== "movie" && seasonEpisodes.length > 1 && (
-          <div className="flex flex-row justify-between items-center gap-4 mt-8 sm:mt-12 px-2 sm:px-0">
+          <div className="flex flex-row justify-between items-center gap-4 mt-8 sm:mt-12 px-4 sm:px-0">
             {/* Previous Button Container */}
             <div className="flex-1 flex justify-start">
               {(() => {
