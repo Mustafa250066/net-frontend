@@ -221,18 +221,14 @@ const VideoPlayerPage = () => {
       </h2>
 
       <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto my-4 sm:my-12 px-0 sm:px-6 lg:px-8">
-          {/* Cinematic Aspect Ratio Wrapper */}
-          <div className="w-full aspect-video relative bg-black sm:rounded-xl overflow-hidden shadow-2xl">
-            <VideoPlayer
-              key={episodeId}
-              ref={videoRef}
-              url={episode.video_url}
-              onPlay={handleVideoPlay}
-              onPause={handleVideoPause}
-            // Agar VideoPlayer component custom hai, toh uske andar wale element ko bhi width 100% aur height 100% zaroor dena
-            />
-          </div>
+        <div className="max-w-7xl mx-auto my-0 sm:my-12 px-0 sm:px-6 lg:px-8">
+          <VideoPlayer
+            key={episodeId}
+            ref={videoRef}
+            url={episode.video_url}
+            onPlay={handleVideoPlay}
+            onPause={handleVideoPause}
+          />
         </div>
 
         {/* Navigation Buttons */}

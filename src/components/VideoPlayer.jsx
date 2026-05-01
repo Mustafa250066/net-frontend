@@ -39,10 +39,10 @@ export default function VideoPlayer({ url }) {
 
 
   return (
-    <div className="w-full aspect-video rounded-lg overflow-hidden bg-black">
+    <div className="relative w-full aspect-video bg-black overflow-hidden sm:rounded-xl shadow-2xl">
       <iframe
         src={getEmbedUrl(url)}
-        className="w-full h-full"
+        className="absolute top-0 left-0 w-full h-full border-0"
         allowFullScreen
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       />
