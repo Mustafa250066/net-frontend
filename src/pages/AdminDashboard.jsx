@@ -242,7 +242,7 @@ const AdminDashboard = () => {
         axios.get(`${API}/movies`),
       ]);
       setShows(showsRes.data);
-      setSeasons(seasonsRes.data);
+      setSeasons(seasonsRes.data.sort((a,b)=>a.season_number-b.season_number));
       setEpisodes(episodesRes.data);
       setMovies(moviesRes.data);
     } catch (error) {

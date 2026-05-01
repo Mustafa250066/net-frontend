@@ -132,7 +132,7 @@ const MovieDetailPage = () => {
 
             {/* Movie Description */}
             {movie.description && (
-              <p className="text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md line-clamp-3 break-words leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md line-clamp-5 break-words leading-relaxed max-w-2xl">
                 {movie.description}
               </p>
             )}
