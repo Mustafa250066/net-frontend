@@ -204,30 +204,36 @@ const VideoPlayerPage = () => {
       {/* ----- VIDEO PLAYER ----- */}
 
       <h2
-          className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-2 sm:mb-3 line-clamp-2 break-all sm:break-words drop-shadow-lg flex items-start sm:items-center gap-2 sm:gap-3 leading-tight mt-20 ml-4"
-          style={{ fontFamily: "Space Grotesk, sans-serif" }}
-        >
-          {type === "movie" ? (
-            episode.title
-          ) : (
-            <>
-              <span>
-                {episode.title
-                  ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
-                  : `Episode ${episode.episode_number}`}
-              </span>
-            </>
-          )}
-        </h2>
+        className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-2 sm:mb-3 line-clamp-2 break-all sm:break-words drop-shadow-lg flex items-start sm:items-center gap-2 sm:gap-3 leading-tight mt-20 ml-4"
+        style={{ fontFamily: "Space Grotesk, sans-serif" }}
+      >
+        {type === "movie" ? (
+          episode.title
+        ) : (
+          <>
+            <span>
+              {episode.title
+                ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                : `Episode ${episode.episode_number}`}
+            </span>
+          </>
+        )}
+      </h2>
 
       <div className="max-w-7xl mx-auto my-12 py-6 px-4 sm:px-6 lg:px-8">
-        <VideoPlayer
-          key={episodeId}
-          ref={videoRef}
-          url={episode.video_url}
-          onPlay={handleVideoPlay}
-          onPause={handleVideoPause}
-        />
+        <div className="max-w-7xl mx-auto my-4 sm:my-12 px-0 sm:px-6 lg:px-8">
+          {/* Cinematic Aspect Ratio Wrapper */}
+          <div className="w-full aspect-video relative bg-black sm:rounded-xl overflow-hidden shadow-2xl">
+            <VideoPlayer
+              key={episodeId}
+              ref={videoRef}
+              url={episode.video_url}
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+            // Agar VideoPlayer component custom hai, toh uske andar wale element ko bhi width 100% aur height 100% zaroor dena
+            />
+          </div>
+        </div>
 
         {/* Navigation Buttons */}
         {type !== "movie" && seasonEpisodes.length > 1 && (
