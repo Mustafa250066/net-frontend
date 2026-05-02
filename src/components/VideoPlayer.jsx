@@ -7,8 +7,27 @@ export default function VideoPlayer({ url }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement || !!document.webkitFullscreenElement);
+    const handleFullscreenChange = async () => {
+      const isFs = !!document.fullscreenElement || !!document.webkitFullscreenElement;
+      setIsFullscreen(isFs);
+      
+      if (isFs) {
+        if (window.screen && screen.orientation && screen.orientation.lock) {
+          try {
+            await screen.orientation.lock("landscape");
+          } catch (err) {
+            console.log("Screen orientation lock failed:", err);
+          }
+        }
+      } else {
+        if (window.screen && screen.orientation && screen.orientation.unlock) {
+          try {
+            screen.orientation.unlock();
+          } catch (err) {
+            console.log("Screen orientation unlock failed:", err);
+          }
+        }
+      }
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -99,22 +118,6 @@ export default function VideoPlayer({ url }) {
   const embedUrl = getEmbedUrl(url);
   const isDirectVideo = /\.(mp4|webm|ogg|mov|avi|mkv|m3u8)(\?|$)/i.test(embedUrl);
   
-  const toggleFullscreen = async () => {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      if (containerRef.current.requestFullscreen) {
-        await containerRef.current.requestFullscreen();
-      } else if (containerRef.current.webkitRequestFullscreen) {
-        await containerRef.current.webkitRequestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        await document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        await document.webkitExitFullscreen();
-      }
-    }
-  };
-
   return (
     <div ref={containerRef} className="w-full h-full bg-black overflow-hidden sm:rounded-xl shadow-lg relative group">
       <style>{`
@@ -155,22 +158,12 @@ export default function VideoPlayer({ url }) {
           Your browser does not support the video tag.
         </video>
       ) : (
-        <>
-          <iframe
-            src={embedUrl}
-            className="scaled-iframe"
-            allowFullScreen
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          />
-          {/* Custom Fullscreen Button for iframe to bypass browser iframe-fullscreen overrides */}
-          <button
-            onClick={toggleFullscreen}
-            className="absolute top-0 left-4 z-50 p-2 bg-black/60 hover:bg-black/90 rounded-md text-white opacity-50 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-            title="Toggle Fullscreen"
-          >
-            {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
-          </button>
-        </>
+        <iframe
+          src={embedUrl}
+          className="scaled-iframe"
+          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        />
       )}
     </div>
   );

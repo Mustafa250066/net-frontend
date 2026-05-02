@@ -183,7 +183,7 @@ const VideoPlayerPage = () => {
               : navigate(`/show/${episode.show_id}`)
           }
           variant="ghost"
-          className="text-white hover:bg-white/20 hover:text-white rounded-full px-4 bg-white/5"
+          className="ml-2 sm:ml-6 px-4 bg-[#e50914] text-white hover:bg-[#e50914db] hover:text-white"
         >
           <ArrowLeft className="mr-2 w-5 h-5" />
           Back
