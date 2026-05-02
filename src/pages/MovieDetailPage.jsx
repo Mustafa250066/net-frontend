@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import convertToDirectUrl from "../lib/convert";
 import getShortAlt from "@/lib/fallback";
 import formatDuration from "@/lib/formatDuration";
+import NetflixSpinner from "@/components/NetflixSpinner";
 
 const MovieDetailPage = () => {
   const { movieId } = useParams();
@@ -60,11 +61,7 @@ const MovieDetailPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
-      </div>
-    );
+    return <NetflixSpinner fullScreen />;
   }
 
   if (!movie) {

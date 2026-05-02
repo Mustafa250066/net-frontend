@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Info, PlayCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import VideoPlayer from "@/components/VideoPlayer";
+import NetflixSpinner from "@/components/NetflixSpinner";
 import formatDuration from "@/lib/formatDuration";
 
 const VideoPlayerPage = () => {
@@ -146,14 +147,7 @@ const VideoPlayerPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="text-white text-lg sm:text-xl flex items-center gap-3">
-          <div className="w-6 h-6 border-4 border-[#e50914] border-t-transparent rounded-full animate-spin"></div>
-          Loading video...
-        </div>
-      </div>
-    );
+    return <NetflixSpinner fullScreen />;
   }
 
   if (!episode) {

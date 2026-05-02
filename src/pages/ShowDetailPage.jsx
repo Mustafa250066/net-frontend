@@ -5,6 +5,7 @@ import { API } from "../App";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Play, Info } from "lucide-react";
 import { toast } from "sonner";
+import NetflixSpinner from "@/components/NetflixSpinner";
 import {
   Select,
   SelectContent,
@@ -15,6 +16,7 @@ import {
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -96,11 +98,7 @@ const ShowDetailPage = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="text-white text-xl text-center">Loading...</div>
-      </div>
-    );
+    return <NetflixSpinner fullScreen />;
   }
 
   if (!show) {
@@ -294,31 +292,58 @@ const ShowDetailPage = () => {
                             {/* Render numeric page links */}
                             {(() => {
                               const pageLinks = [];
-                              const maxVisible = 5;
-                              let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-                              let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-                              if (endPage - startPage + 1 < maxVisible) {
-                                startPage = Math.max(1, endPage - maxVisible + 1);
-                              }
-
-                              for (let i = startPage; i <= endPage; i++) {
+                              
+                              const addPage = (pageNumber) => {
                                 pageLinks.push(
-                                  <PaginationItem key={i}>
+                                  <PaginationItem key={pageNumber}>
                                     <PaginationLink
                                       onClick={(e) => {
                                         e.preventDefault();
-                                        setCurrentPage(i);
+                                        setCurrentPage(pageNumber);
                                         window.scrollTo({ top: 600, behavior: 'smooth' });
                                       }}
-                                      isActive={currentPage === i}
+                                      isActive={currentPage === pageNumber}
                                       className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-800"
                                     >
-                                      {i}
+                                      {pageNumber}
                                     </PaginationLink>
                                   </PaginationItem>
                                 );
+                              };
+
+                              const addEllipsis = (key) => {
+                                pageLinks.push(
+                                  <PaginationItem key={`ellipsis-${key}`}>
+                                    <PaginationEllipsis />
+                                  </PaginationItem>
+                                );
+                              };
+
+                              if (totalPages <= 4) {
+                                for (let i = 1; i <= totalPages; i++) {
+                                  addPage(i);
+                                }
+                              } else {
+                                let start = Math.max(1, currentPage - 1);
+                                let end = Math.min(totalPages, currentPage + 1);
+                                
+                                // Ensure we show at least 3 pages if we are at the very beginning
+                                if (currentPage === 1 && totalPages >= 3) {
+                                  end = 3;
+                                }
+
+                                for (let i = start; i <= end; i++) {
+                                  addPage(i);
+                                }
+
+                                if (end < totalPages) {
+                                  if (end < totalPages - 1) {
+                                    addEllipsis('end');
+                                  }
+                                  addPage(totalPages);
+                                }
                               }
+                              
                               return pageLinks;
                             })()}
 

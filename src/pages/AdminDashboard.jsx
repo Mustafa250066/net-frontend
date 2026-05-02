@@ -1039,31 +1039,57 @@ const AdminDashboard = () => {
   // Helper to render pagination items
   const renderPaginationItems = (currentPage, totalPages, setPage) => {
     const items = [];
-    const maxVisible = 5;
-
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
+    
+    const addPage = (pageNumber) => {
       items.push(
-        <PaginationItem key={i}>
+        <PaginationItem key={pageNumber}>
           <PaginationLink
             onClick={() => {
-              setPage(i);
+              setPage(pageNumber);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            isActive={currentPage === i}
+            isActive={currentPage === pageNumber}
             className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"
           >
-            {i}
+            {pageNumber}
           </PaginationLink>
         </PaginationItem>
       );
+    };
+
+    const addEllipsis = (key) => {
+      items.push(
+        <PaginationItem key={`ellipsis-${key}`}>
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    };
+
+    if (totalPages <= 4) {
+      for (let i = 1; i <= totalPages; i++) {
+        addPage(i);
+      }
+    } else {
+      let start = Math.max(1, currentPage - 1);
+      let end = Math.min(totalPages, currentPage + 1);
+      
+      // Ensure we show at least 3 pages if we are at the very beginning
+      if (currentPage === 1 && totalPages >= 3) {
+        end = 3;
+      }
+
+      for (let i = start; i <= end; i++) {
+        addPage(i);
+      }
+
+      if (end < totalPages) {
+        if (end < totalPages - 1) {
+          addEllipsis('end');
+        }
+        addPage(totalPages);
+      }
     }
+    
     return items;
   };
 
