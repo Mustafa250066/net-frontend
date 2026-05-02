@@ -43,9 +43,18 @@ const HomePage = () => {
   }, [searchQuery]);
 
   const fetchAllContent = async () => {
+    let cachedData = null;
     try {
-      setLoading(true);
-      // Fetch shows, seasons, and movies concurrently
+      // 1. Try to load from cache first for instant render
+      cachedData = localStorage.getItem('flixport_catalog_cache');
+      if (cachedData) {
+        setAllContent(JSON.parse(cachedData));
+        setLoading(false); // Instantly remove spinner
+      } else {
+        setLoading(true); // Only show spinner if we have absolutely no data
+      }
+
+      // 2. Silently fetch fresh data in the background (Stale-While-Revalidate)
       const [showsResponse, seasonsResponse, moviesResponse] = await Promise.all([
         axios.get(`${API}/shows`),
         axios.get(`${API}/seasons`),
@@ -67,11 +76,16 @@ const HomePage = () => {
         if (i < activeMovies.length) mergedContent.push(activeMovies[i]);
       }
 
+      // 3. Update state and cache with fresh data
       setAllContent(mergedContent);
+      localStorage.setItem('flixport_catalog_cache', JSON.stringify(mergedContent));
       
     } catch (error) {
       console.error('Error fetching content:', error);
-      toast.error('Failed to load content');
+      // Only show error toast if we also failed to load cached data
+      if (!cachedData) {
+        toast.error('Failed to load content');
+      }
     } finally {
       setLoading(false);
     }
