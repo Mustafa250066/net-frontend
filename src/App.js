@@ -10,7 +10,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from '@/components/ui/sonner';
 import Footer from './components/footer';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://net-backend-one.vercel.app';
 export const API = `${BACKEND_URL}/api`;
 
 // Create axios instance with auth
