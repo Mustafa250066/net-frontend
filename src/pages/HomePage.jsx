@@ -45,30 +45,48 @@ const HomePage = () => {
   const fetchAllContent = async () => {
     let cachedData = null;
     try {
-      // 1. Try to load from cache first for instant render
+      // 1. Safe Cache Loading
       cachedData = localStorage.getItem('flixport_catalog_cache');
       if (cachedData) {
-        setAllContent(JSON.parse(cachedData));
-        setLoading(false); // Instantly remove spinner
+        try {
+          const parsed = JSON.parse(cachedData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setAllContent(parsed);
+            setLoading(false); 
+          }
+        } catch (e) {
+          console.error("Cache parsing failed", e);
+          localStorage.removeItem('flixport_catalog_cache'); // Purge corrupt cache
+        }
       } else {
-        setLoading(true); // Only show spinner if we have absolutely no data
+        setLoading(true);
       }
 
-      // 2. Silently fetch fresh data in the background (Stale-While-Revalidate)
-      const [showsResponse, seasonsResponse, moviesResponse] = await Promise.all([
+      // 2. Background Fetch with individual error handling
+      // Taake agar ek API fail ho toh baqi chalti rahain
+      const [showsRes, seasonsRes, moviesRes] = await Promise.allSettled([
         axios.get(`${API}/shows`),
         axios.get(`${API}/seasons`),
         axios.get(`${API}/movies`)
       ]);
 
-      const validShowIds = new Set(seasonsResponse.data.map(season => season.show_id));
-      const activeShows = showsResponse.data
+      // Check results (Settled gives status 'fulfilled' or 'rejected')
+      const showsData = showsRes.status === 'fulfilled' ? showsRes.value.data : [];
+      const seasonsData = seasonsRes.status === 'fulfilled' ? seasonsRes.value.data : [];
+      const moviesData = moviesRes.status === 'fulfilled' ? moviesRes.value.data : [];
+
+      if (showsData.length === 0 && moviesData.length === 0 && !cachedData) {
+        throw new Error("No data received from any API");
+      }
+
+      const validShowIds = new Set(seasonsData.map(season => season.show_id));
+      const activeShows = showsData
         .filter(show => validShowIds.has(show.id))
         .map(show => ({ ...show, contentType: 'show' }));
 
-      const activeMovies = moviesResponse.data.map(movie => ({ ...movie, contentType: 'movie' }));
+      const activeMovies = moviesData.map(movie => ({ ...movie, contentType: 'movie' }));
 
-      // Interleave shows and movies
+      // Interleave shows and movies logic
       const mergedContent = [];
       const maxLength = Math.max(activeShows.length, activeMovies.length);
       for (let i = 0; i < maxLength; i++) {
@@ -76,14 +94,15 @@ const HomePage = () => {
         if (i < activeMovies.length) mergedContent.push(activeMovies[i]);
       }
 
-      // 3. Update state and cache with fresh data
-      setAllContent(mergedContent);
-      localStorage.setItem('flixport_catalog_cache', JSON.stringify(mergedContent));
+      // 3. Update state and cache
+      if (mergedContent.length > 0) {
+        setAllContent(mergedContent);
+        localStorage.setItem('flixport_catalog_cache', JSON.stringify(mergedContent));
+      }
       
     } catch (error) {
       console.error('Error fetching content:', error);
-      // Only show error toast if we also failed to load cached data
-      if (!cachedData) {
+      if (!localStorage.getItem('flixport_catalog_cache')) {
         toast.error('Failed to load content');
       }
     } finally {
