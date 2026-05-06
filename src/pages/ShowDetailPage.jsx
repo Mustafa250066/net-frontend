@@ -202,8 +202,8 @@ const ShowDetailPage = () => {
                   {seasons.map((season) => (
                     // SelectItem styling: Allow wrapping and clamping
                     <SelectItem key={season.id} value={season.id} className="w-full min-w-0">
-                      <div className="line-clamp-2 break-all sm:break-words whitespace-normal text-left">
-                        Season {season.season_number}
+                      <div className="line-clamp-1 break-all sm:break-words whitespace-normal text-left truncate break-words">
+                        Season {season.season_number} {season.name && ` - ${season.name}`}
                       </div>
                     </SelectItem>
                   ))}

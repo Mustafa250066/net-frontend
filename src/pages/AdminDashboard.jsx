@@ -2363,7 +2363,7 @@ const AdminDashboard = () => {
                                       }}
                                     />
                                     <h3 className="text-sm sm:text-base font-bold truncate">
-                                      {show.name} - Season {season.season_number}
+                                      {show.name} - Season {season.season_number} {season.name && ` - ${season.name}`}
                                       <span className="ml-2 text-[10px] sm:text-xs text-gray-500 font-medium">({groupEpisodes.length} episodes)</span>
                                     </h3>
                                   </div>
@@ -2872,7 +2872,7 @@ const AdminDashboard = () => {
                                 }}
                               />
                               <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={`${show?.name} - Season ${season?.season_number}`}>
-                                {show?.name} - Season {season?.season_number}
+                                {show?.name} - Season {season?.season_number} {season.name && ` - ${season?.name}`}
                               </p>
                             </div>
                             <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
