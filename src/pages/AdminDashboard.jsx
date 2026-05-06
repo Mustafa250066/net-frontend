@@ -914,7 +914,7 @@ const AdminDashboard = () => {
               const epNumberStr = getCellValue(item, ['episode_number', 'episode', 'number']);
               const epNumber = parseInt(epNumberStr);
               const videoUrl = getCellValue(item, ['video_url', 'url', 'video', 'link']);
-              const title = getCellValue(item, ['title', 'name']) || `Episode ${epNumber}`;
+              const title = getCellValue(item, ['title', 'name']) ?? "";
               
               if (isNaN(epNumber)) {
                 reportItems.push({ row: rowNum, name: "Unknown", status: "Error", message: "Invalid episode number" });
