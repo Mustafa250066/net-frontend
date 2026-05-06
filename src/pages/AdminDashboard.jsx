@@ -2363,7 +2363,7 @@ const AdminDashboard = () => {
                                       }}
                                     />
                                     <h3 className="text-sm sm:text-base font-bold truncate line-clamp-1 break-words">
-                                      {show.name} - Season {season.season_number} {season.name && ` - ${getShortAlt(season.name)}`}
+                                      {show.name} - Season {season.season_number} {season.name && ` - ${truncateText(season.name)}`}
                                       <span className="ml-2 text-[10px] sm:text-xs text-gray-500 font-medium">({groupEpisodes.length} episodes)</span>
                                     </h3>
                                   </div>
