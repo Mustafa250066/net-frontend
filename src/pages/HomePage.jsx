@@ -19,6 +19,8 @@ import {
 import getShortAlt from "@/lib/fallback";
 import NetflixSpinner from '@/components/NetflixSpinner';
 
+const CACHE_VERSION = "v1.1";
+const CACHE_KEY = `flixport_catalog_cache_${CACHE_VERSION}`;
 const HomePage = () => {
   const navigate = useNavigate();
   const [allContent, setAllContent] = useState([]);
@@ -45,8 +47,18 @@ const HomePage = () => {
   const fetchAllContent = async () => {
     let cachedData = null;
     try {
+      // 0. Purge old cache versions
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('flixport_catalog_cache_') || key === 'flixport_catalog_cache') && key !== CACHE_KEY) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+
       // 1. Safe Cache Loading
-      cachedData = localStorage.getItem('flixport_catalog_cache');
+      cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) {
         try {
           const parsed = JSON.parse(cachedData);
@@ -56,7 +68,7 @@ const HomePage = () => {
           }
         } catch (e) {
           console.error("Cache parsing failed", e);
-          localStorage.removeItem('flixport_catalog_cache'); // Purge corrupt cache
+          localStorage.removeItem(CACHE_KEY); // Purge corrupt cache
         }
       } else {
         setLoading(true);
@@ -97,12 +109,12 @@ const HomePage = () => {
       // 3. Update state and cache
       if (mergedContent.length > 0) {
         setAllContent(mergedContent);
-        localStorage.setItem('flixport_catalog_cache', JSON.stringify(mergedContent));
+        localStorage.setItem(CACHE_KEY, JSON.stringify(mergedContent));
       }
       
     } catch (error) {
       console.error('Error fetching content:', error);
-      if (!localStorage.getItem('flixport_catalog_cache')) {
+      if (!localStorage.getItem(CACHE_KEY)) {
         toast.error('Failed to load content');
       }
     } finally {
