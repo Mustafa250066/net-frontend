@@ -6,6 +6,15 @@ export default function VideoPlayer({ url }) {
   const [scale, setScale] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Helper to detect YouTube URL
+  const isYouTubeUrl = (link) => {
+    if (!link) return false;
+    const trimmed = link.trim();
+    return trimmed.includes('youtube.com') || trimmed.includes('youtu.be');
+  };
+
+  const isYouTube = isYouTubeUrl(url);
+
   useEffect(() => {
     const handleFullscreenChange = async () => {
       const isFs = !!document.fullscreenElement || !!document.webkitFullscreenElement;
@@ -44,6 +53,12 @@ export default function VideoPlayer({ url }) {
     const updateScale = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
+        // Agar YouTube hai toh scale default 1 rahega
+        if (isYouTube) {
+          setScale(1);
+          return;
+        }
+
         const width = isFullscreen 
           ? window.innerWidth 
           : (containerRef.current ? containerRef.current.offsetWidth : 0);
@@ -52,10 +67,6 @@ export default function VideoPlayer({ url }) {
           : (containerRef.current ? containerRef.current.offsetHeight : 0);
         
         if (width > 0 && height > 0) {
-          // We set a high simulated resolution (1280x720). 
-          // Because third-party video hosts often inject fixed-pixel-size popup ads on pause,
-          // a higher MIN_W results in a smaller CSS scale factor, which visually shrinks the ad
-          // so it doesn't take up the whole screen on mobile.
           const MIN_W = 1280;
           const MIN_H = 720;
           
@@ -79,7 +90,7 @@ export default function VideoPlayer({ url }) {
       window.removeEventListener("resize", updateScale);
       window.removeEventListener("orientationchange", updateScale);
     };
-  }, [isFullscreen]);
+  }, [isFullscreen, isYouTube, url]);
 
   if (!url) return null;
 
@@ -121,6 +132,7 @@ export default function VideoPlayer({ url }) {
   return (
     <div ref={containerRef} className="w-full h-full bg-black overflow-hidden sm:rounded-xl shadow-lg relative group">
       <style>{`
+        /* Default scaling rules for non-youtube players (like Google Drive) */
         .scaled-iframe {
           width: ${scale < 1 ? (100 / scale) + '%' : '100%'} !important;
           height: ${scale < 1 ? (100 / scale) + '%' : '100%'} !important;
@@ -132,14 +144,25 @@ export default function VideoPlayer({ url }) {
           border: 0 !important;
         }
 
-        /* Chrome/Safari support zoom. Zoom correctly scales window.innerWidth inside the iframe, 
-           preventing the player's internal JS controls from incorrectly centering on the left side. */
-        @supports (zoom: 1) {
+        /* YouTube specific overriding rules to keep it responsive and native */
+        ${isYouTube ? `
           .scaled-iframe {
             transform: none !important;
+            zoom: 1 !important;
             width: 100% !important;
             height: 100% !important;
-            zoom: ${scale < 1 ? scale : 1} !important;
+          }
+        ` : ''}
+
+        /* Browser zoom support targeting non-youtube links */
+        @supports (zoom: 1) {
+          .scaled-iframe {
+            ${!isYouTube ? `
+              transform: none !important;
+              width: 100% !important;
+              height: 100% !important;
+              zoom: ${scale < 1 ? scale : 1} !important;
+            ` : ''}
           }
         }
       `}</style>
