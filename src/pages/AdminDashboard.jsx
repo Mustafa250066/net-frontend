@@ -2872,7 +2872,7 @@ const AdminDashboard = () => {
                                 }}
                               />
                               <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={`${show?.name} - Season ${season?.season_number}`}>
-                                {show?.name} - Season {season?.season_number} {season.name && ` - ${truncateText(season?.name)}`}
+                                {show?.name} - Season {season?.season_number} {season?.name && ` - ${truncateText(season?.name)}`}
                               </p>
                             </div>
                             <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-2 break-words" title={`Episode ${episode.episode_number}: ${episode.title}`}>
