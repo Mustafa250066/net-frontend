@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import VideoPlayer from "@/components/VideoPlayer";
 import NetflixSpinner from "@/components/NetflixSpinner";
 import formatDuration from "@/lib/formatDuration";
+import { slugify } from "@/lib/utils";
 
 const VideoPlayerPage = () => {
   const { episodeId } = useParams();
@@ -174,7 +175,7 @@ const VideoPlayerPage = () => {
           onClick={() =>
             type === "movie"
               ? navigate(-1)
-              : navigate(`/show/${episode.show_id}`)
+              : navigate(`/show/${showData?.name ? slugify(showData.name) : episode.show_id}`)
           }
           variant="ghost"
           className="ml-2 sm:ml-6 px-4 bg-[#e50914] text-white hover:bg-[#e50914db] hover:text-white"

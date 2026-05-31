@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/pagination";
 import getShortAlt from "@/lib/fallback";
 import NetflixSpinner from '@/components/NetflixSpinner';
+import { slugify } from "@/lib/utils";
 
 const CACHE_VERSION = "v1.1";
 const CACHE_KEY = `flixport_catalog_cache_${CACHE_VERSION}`;
@@ -321,7 +322,7 @@ const HomePage = () => {
                     const isShow = item.contentType === 'show';
                     const title = isShow ? item.name : item.title;
                     const imageUrl = isShow ? item.poster_url : (item.poster_url || item.thumbnail_url);
-                    const navRoute = isShow ? `/show/${item.id}` : `/movie/${item.id}`;
+                    const navRoute = isShow ? `/show/${slugify(title)}` : `/movie/${slugify(title)}`;
 
                     return (
                       <div

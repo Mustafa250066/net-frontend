@@ -9,6 +9,7 @@ import convertToDirectUrl from "../lib/convert";
 import getShortAlt from "@/lib/fallback";
 import formatDuration from "@/lib/formatDuration";
 import NetflixSpinner from "@/components/NetflixSpinner";
+import { slugify } from "@/lib/utils";
 
 const MovieDetailPage = () => {
   const { movieId } = useParams();
@@ -158,7 +159,7 @@ const MovieDetailPage = () => {
             {relatedMovies.map((relatedMovie) => (
               <div
                 key={relatedMovie.id}
-                onClick={() => navigate(`/movie/${relatedMovie.id}`)}
+                onClick={() => navigate(`/movie/${slugify(relatedMovie.title)}`)}
                 className="rounded-lg overflow-hidden bg-[#1a1a1a] group cursor-pointer"
               >
                 <div className="relative aspect-[2/3] overflow-hidden">

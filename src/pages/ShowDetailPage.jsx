@@ -48,12 +48,12 @@ const ShowDetailPage = () => {
 
   const fetchShowDetails = async () => {
     try {
-      const [showRes, seasonsRes] = await Promise.all([
-        axios.get(`${API}/shows/${showId}`),
-        axios.get(`${API}/seasons?show_id=${showId}`),
-      ]);
+      const showRes = await axios.get(`${API}/shows/${showId}`);
+      const showData = showRes.data;
+      setShow(showData);
 
-      setShow(showRes.data);
+      const seasonsRes = await axios.get(`${API}/seasons?show_id=${showData.id}`);
+
       const sortedSeasons = seasonsRes.data.sort(
         (a, b) => a.season_number - b.season_number,
       );
