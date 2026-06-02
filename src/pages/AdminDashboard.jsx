@@ -253,6 +253,7 @@ const AdminDashboard = () => {
   // Show Operations
   const handleCreateShow = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await axiosInstance.post("/shows", showForm);
       toast.success("Show created successfully");
@@ -276,6 +277,8 @@ const AdminDashboard = () => {
       };
       setBulkReport(report);
       setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -297,6 +300,7 @@ const AdminDashboard = () => {
 
   const handleUpdateShow = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await axiosInstance.put(`/shows/${editingShow.id}`, showForm);
       toast.success("Show updated successfully");
@@ -306,22 +310,25 @@ const AdminDashboard = () => {
       fetchAllData();
     } catch (error) {
       toast.error("Failed to update show");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteShow = async (showId) => {
-    if (
-      !window.confirm(
-        "Are you sure? This will delete all seasons and episodes."
-      )
-    )
+    if ( !window.confirm("Are you sure? This will delete all seasons and episodes.")) {
       return;
+    }
+    setLoading(true);
     try {
       await axiosInstance.delete(`/shows/${showId}`);
       toast.success("Show deleted successfully");
       fetchAllData();
     } catch (error) {
+      console.error("Delete request failed:", error);
       toast.error("Failed to delete show");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -354,6 +361,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await axiosInstance.post("/seasons", {
         ...seasonForm,
@@ -381,6 +389,8 @@ const AdminDashboard = () => {
       };
       setBulkReport(report);
       setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -424,6 +434,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await axiosInstance.put(`/seasons/${editingSeason.id}`, {
         ...seasonForm,
@@ -436,17 +447,22 @@ const AdminDashboard = () => {
       fetchAllData();
     } catch (error) {
       toast.error("Failed to update season");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteSeason = async (seasonId) => {
     if (!window.confirm("Are you sure? This will delete all episodes.")) return;
+    setLoading(true);
     try {
       await axiosInstance.delete(`/seasons/${seasonId}`);
       toast.success("Season deleted successfully");
       fetchAllData();
     } catch (error) {
       toast.error("Failed to delete season");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -497,6 +513,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const episodeData = {
         ...episodeForm,
@@ -535,6 +552,8 @@ const AdminDashboard = () => {
       };
       setBulkReport(report);
       setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -609,6 +628,7 @@ const AdminDashboard = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const episodeData = {
         ...episodeForm,
@@ -633,23 +653,29 @@ const AdminDashboard = () => {
       fetchAllData();
     } catch (error) {
       toast.error("Failed to update episode");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteEpisode = async (episodeId) => {
     if (!window.confirm("Are you sure?")) return;
+    setLoading(true);
     try {
       await axiosInstance.delete(`/episodes/${episodeId}`);
       toast.success("Episode deleted successfully");
       fetchAllData();
     } catch (error) {
       toast.error("Failed to delete episode");
+    } finally {
+      setLoading(false);
     }
   };
 
   // Movie Operations
   const handleCreateMovie = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const movieData = {
         ...movieForm,
@@ -686,6 +712,8 @@ const AdminDashboard = () => {
       };
       setBulkReport(report);
       setTimeout(() => setBulkReport(p => p === report ? null : p), 60000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -719,6 +747,7 @@ const AdminDashboard = () => {
 
   const handleUpdateMovie = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const movieData = {
         ...movieForm,
@@ -740,23 +769,29 @@ const AdminDashboard = () => {
       fetchAllData();
     } catch (error) {
       toast.error("Failed to update movie");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDeleteMovie = async (movieId) => {
     if (!window.confirm("Are you sure?")) return;
+    setLoading(true);
     try {
       await axiosInstance.delete(`/movies/${movieId}`);
       toast.success("Movie deleted successfully");
       fetchAllData();
     } catch (error) {
       toast.error("Failed to delete movie");
+    } finally {
+      setLoading(false);
     }
   };
 
   // Password Change
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await axiosInstance.post("/auth/change-password", passwordForm);
       toast.success("Password changed successfully");
@@ -764,6 +799,8 @@ const AdminDashboard = () => {
       setPasswordForm({ current_password: "", new_password: "" });
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to change password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1045,11 +1082,12 @@ const AdminDashboard = () => {
         <PaginationItem key={pageNumber}>
           <PaginationLink
             onClick={() => {
+              if (loading || bulkLoading) return;
               setPage(pageNumber);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             isActive={currentPage === pageNumber}
-            className="cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"
+            className={loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] hover:text-white transition-colors border-gray-700"}
           >
             {pageNumber}
           </PaginationLink>
@@ -1209,6 +1247,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="border-gray-700"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Home
@@ -1219,6 +1258,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="border-gray-700"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <Key className="mr-2 h-4 w-4" />
                 Change Password
@@ -1229,6 +1269,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="border-[#e50914] text-[#e50914] hover:text-white hover:bg-[#e50914]"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -1241,6 +1282,7 @@ const AdminDashboard = () => {
               size="sm"
               className="md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              disabled={loading || bulkLoading}
             >
               {mobileMenuOpen ? (
                 <X className="h-5 w-5 text-gray-400" />
@@ -1262,6 +1304,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="w-full justify-start border-gray-700"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <Home className="mr-2 h-4 w-4" />
                 Home
@@ -1275,6 +1318,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="w-full justify-start border-gray-700"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <Key className="mr-2 h-4 w-4" />
                 Change Password
@@ -1285,6 +1329,7 @@ const AdminDashboard = () => {
                 variant="outline"
                 className="w-full justify-start border-red-500 text-red-500 hover:text-white hover:bg-red-500"
                 size="sm"
+                disabled={loading || bulkLoading}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -1301,11 +1346,16 @@ const AdminDashboard = () => {
         <Dialog
           open={showDialog}
           onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
             if (!open) handleCloseShowDialog();
             else setShowDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden">
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingShow ? "Edit Show" : "Add New Show"}
@@ -1325,6 +1375,7 @@ const AdminDashboard = () => {
                   }
                   required
                   placeholder="E.g. Stranger Things"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1340,6 +1391,7 @@ const AdminDashboard = () => {
                   }
                   rows={3}
                   placeholder="Brief description of the show..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1354,14 +1406,16 @@ const AdminDashboard = () => {
                     })
                   }
                   placeholder="https://example.com/poster.jpg"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <Button
                 data-testid="create-show-btn"
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                disabled={loading || bulkLoading}
               >
-                {editingShow ? "Update Show" : "Create Show"}
+                {loading ? "Saving..." : (editingShow ? "Update Show" : "Create Show")}
               </Button>
             </form>
           </DialogContent>
@@ -1370,11 +1424,16 @@ const AdminDashboard = () => {
         <Dialog
           open={seasonDialog}
           onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
             if (!open) handleCloseSeasonDialog();
             else setSeasonDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden">
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg overflow-hidden"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingSeason ? "Edit Season" : "Add New Season"}
@@ -1394,6 +1453,7 @@ const AdminDashboard = () => {
                     setSeasonForm({ ...seasonForm, show_id: value })
                   }
                   required
+                  disabled={loading || bulkLoading}
                 >
                   <SelectTrigger data-testid="season-show-select" className="w-full">
                     <div className="truncate text-left w-full">
@@ -1426,6 +1486,7 @@ const AdminDashboard = () => {
                   }}
                   required
                   placeholder="1, 2, 3..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1437,14 +1498,16 @@ const AdminDashboard = () => {
                     setSeasonForm({ ...seasonForm, name: e.target.value })
                   }
                   placeholder="E.g. Season 1: The Beginning"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <Button
                 data-testid="create-season-btn"
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                disabled={loading || bulkLoading}
               >
-                {editingSeason ? "Update Season" : "Create Season"}
+                {loading ? "Saving..." : (editingSeason ? "Update Season" : "Create Season")}
               </Button>
             </form>
           </DialogContent>
@@ -1453,11 +1516,16 @@ const AdminDashboard = () => {
         <Dialog
           open={episodeDialog}
           onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
             if (!open) handleCloseEpisodeDialog();
             else setEpisodeDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden">
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingEpisode ? "Edit Episode" : "Add New Episode"}
@@ -1481,6 +1549,7 @@ const AdminDashboard = () => {
                     })
                   }
                   required
+                  disabled={loading || bulkLoading}
                 >
                   <SelectTrigger data-testid="episode-show-select" className="w-full">
                     <div className="truncate text-left w-full">
@@ -1504,7 +1573,7 @@ const AdminDashboard = () => {
                     setEpisodeForm({ ...episodeForm, season_id: value })
                   }
                   required
-                  disabled={!episodeForm.show_id}
+                  disabled={!episodeForm.show_id || loading || bulkLoading}
                 >
                   <SelectTrigger data-testid="episode-season-select" className="w-full">
                     <div className="truncate text-left w-full">
@@ -1540,6 +1609,7 @@ const AdminDashboard = () => {
                   }}
                   required
                   placeholder="1, 2, 3..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1554,6 +1624,7 @@ const AdminDashboard = () => {
                     })
                   }
                   placeholder="E.g. Chapter One: The Vanishing of Will Byers"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1569,6 +1640,7 @@ const AdminDashboard = () => {
                   }
                   placeholder="https://..."
                   required
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1584,6 +1656,7 @@ const AdminDashboard = () => {
                   }
                   rows={3}
                   placeholder="Episode summary..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1602,6 +1675,7 @@ const AdminDashboard = () => {
                     }
                   }}
                   placeholder="45"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1616,14 +1690,16 @@ const AdminDashboard = () => {
                     })
                   }
                   placeholder="https://..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <Button
                 data-testid="create-episode-btn"
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                disabled={loading || bulkLoading}
               >
-                {editingEpisode ? "Update Episode" : "Create Episode"}
+                {loading ? "Saving..." : (editingEpisode ? "Update Episode" : "Create Episode")}
               </Button>
             </form>
           </DialogContent>
@@ -1632,11 +1708,16 @@ const AdminDashboard = () => {
         <Dialog
           open={movieDialog}
           onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
             if (!open) handleCloseMovieDialog();
             else setMovieDialog(true);
           }}
         >
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden">
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-2xl mx-auto max-h-[90vh] overflow-y-auto rounded-lg overflow-x-hidden"
+          >
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl">
                 {editingMovie ? "Edit Movie" : "Add New Movie"}
@@ -1658,6 +1739,7 @@ const AdminDashboard = () => {
                       show_id: value === "none" ? "" : value,
                     })
                   }
+                  disabled={loading || bulkLoading}
                 >
                   <SelectTrigger data-testid="movie-show-select" className="w-full">
                     <div className="truncate text-left w-full">
@@ -1684,6 +1766,7 @@ const AdminDashboard = () => {
                   }
                   required
                   placeholder="E.g. Extraction"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1699,6 +1782,7 @@ const AdminDashboard = () => {
                   }
                   placeholder="https://..."
                   required
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1714,6 +1798,7 @@ const AdminDashboard = () => {
                   }
                   rows={3}
                   placeholder="Movie summary..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1729,6 +1814,7 @@ const AdminDashboard = () => {
                     }
                   }}
                   placeholder="120"
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1743,6 +1829,7 @@ const AdminDashboard = () => {
                     })
                   }
                   placeholder="https://..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <div>
@@ -1757,22 +1844,34 @@ const AdminDashboard = () => {
                     })
                   }
                   placeholder="https://..."
+                  disabled={loading || bulkLoading}
                 />
               </div>
               <Button
                 data-testid="create-movie-btn"
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                disabled={loading || bulkLoading}
               >
-                {editingMovie ? "Update Movie" : "Create Movie"}
+                {loading ? "Saving..." : (editingMovie ? "Update Movie" : "Create Movie")}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
 
         {/* Bulk Upload Dialog */}
-        <Dialog open={bulkDialog} onOpenChange={(open) => !open && handleCloseBulkDialog()}>
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg shadow-2xl overflow-hidden">
+        <Dialog
+          open={bulkDialog}
+          onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
+            if (!open) handleCloseBulkDialog();
+          }}
+        >
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] sm:max-w-lg mx-auto rounded-lg shadow-2xl overflow-hidden"
+          >
             <DialogHeader className="mb-4">
               <DialogTitle className="text-xl font-bold text-[#e50914] capitalize">
                 Bulk Upload {bulkType}
@@ -1786,6 +1885,7 @@ const AdminDashboard = () => {
                     value={bulkForm.show_id}
                     onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value })}
                     required
+                    disabled={loading || bulkLoading}
                   >
                     <SelectTrigger className="w-full overflow-hidden">
                       <div className="truncate text-left w-full">
@@ -1810,6 +1910,7 @@ const AdminDashboard = () => {
                       value={bulkForm.show_id}
                       onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value, season_id: "" })}
                       required
+                      disabled={loading || bulkLoading}
                     >
                       <SelectTrigger className="w-full overflow-hidden">
                         <div className="truncate text-left w-full">
@@ -1831,7 +1932,7 @@ const AdminDashboard = () => {
                       value={bulkForm.season_id}
                       onValueChange={(value) => setBulkForm({ ...bulkForm, season_id: value })}
                       required
-                      disabled={!bulkForm.show_id}
+                      disabled={!bulkForm.show_id || loading || bulkLoading}
                     >
                       <SelectTrigger className="w-full disabled:opacity-50 overflow-hidden">
                         <div className="truncate text-left w-full">
@@ -1855,6 +1956,7 @@ const AdminDashboard = () => {
                   <Select
                     value={bulkForm.show_id || "none"}
                     onValueChange={(value) => setBulkForm({ ...bulkForm, show_id: value === "none" ? "" : value })}
+                    disabled={loading || bulkLoading}
                   >
                     <SelectTrigger className="w-full overflow-hidden">
                       <div className="truncate text-left w-full">
@@ -1882,7 +1984,7 @@ const AdminDashboard = () => {
                   accept=".xlsx, .xls"
                   onChange={(e) => setBulkFile(e.target.files[0])}
                   required
-                  disabled={bulkLoading}
+                  disabled={loading || bulkLoading}
                   className="mt-1 h-auto p-1.5 bg-[#2a2a2a] border-gray-700 text-gray-300 file:bg-[#3d3d3d] file:text-white file:border-0 file:rounded-md file:px-4 file:py-1.5 file:mr-4 file:cursor-pointer hover:file:bg-[#4d4d4d] transition-all disabled:opacity-50"
                 />
 
@@ -1930,7 +2032,7 @@ const AdminDashboard = () => {
               <Button
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#b00710] text-white font-bold h-12 rounded-md shadow-lg transition-all active:scale-[0.98]"
-                disabled={bulkLoading}
+                disabled={loading || bulkLoading}
               >
                 {bulkLoading ? (
                   <div className="flex items-center gap-2">
@@ -2012,8 +2114,18 @@ const AdminDashboard = () => {
         </Dialog>
 
         {/* Change Password Dialog */}
-        <Dialog open={passwordDialog} onOpenChange={setPasswordDialog}>
-          <DialogContent className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-md mx-auto rounded-lg shadow-2xl">
+        <Dialog
+          open={passwordDialog}
+          onOpenChange={(open) => {
+            if (loading || bulkLoading) return;
+            setPasswordDialog(open);
+          }}
+        >
+          <DialogContent
+            onPointerDownOutside={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (loading || bulkLoading) e.preventDefault(); }}
+            className="bg-[#1a1a1a] border-gray-800 w-[95vw] max-w-md mx-auto rounded-lg shadow-2xl"
+          >
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-white">Change Password</DialogTitle>
             </DialogHeader>
@@ -2034,6 +2146,7 @@ const AdminDashboard = () => {
                     required
                     className="pr-10"
                     placeholder="Enter current password"
+                    disabled={loading || bulkLoading}
                   />
                   <Button
                     type="button"
@@ -2041,6 +2154,7 @@ const AdminDashboard = () => {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
                     onClick={() => setShowPassword((prev) => !prev)}
+                    disabled={loading || bulkLoading}
                   >
                     {showPassword ? (
                       <EyeOff
@@ -2072,6 +2186,7 @@ const AdminDashboard = () => {
                     required
                     className="pr-10"
                     placeholder="Enter new password"
+                    disabled={loading || bulkLoading}
                   />
                   <Button
                     type="button"
@@ -2079,6 +2194,7 @@ const AdminDashboard = () => {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent group"
                     onClick={() => setShowNewPassword((prev) => !prev)}
+                    disabled={loading || bulkLoading}
                   >
                     {showNewPassword ? (
                       <EyeOff
@@ -2098,14 +2214,22 @@ const AdminDashboard = () => {
                 data-testid="change-password-submit-btn"
                 type="submit"
                 className="w-full bg-[#e50914] hover:bg-[#f40612]"
+                disabled={loading || bulkLoading}
               >
-                Change Password
+                {loading ? "Changing..." : "Change Password"}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(val) => {
+            if (loading || bulkLoading) return;
+            setActiveTab(val);
+          }}
+          className="w-full"
+        >
           {/* Sticky Search and Tabs Container */}
           <div className="sticky top-[52px] sm:top-[64px] z-40 bg-black/95 backdrop-blur-sm -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 px-3 sm:px-4 md:px-6 lg:px-8 py-4 border-b border-gray-800">
           {/* Search and Filters Section */}
@@ -2122,14 +2246,17 @@ const AdminDashboard = () => {
                     if (e.target.value) setActiveTab("search");
                     else setActiveTab("shows");
                   }}
+                  disabled={loading || bulkLoading}
                 />
                 {adminSearchQuery && (
                   <button 
                     onClick={() => {
+                      if (loading || bulkLoading) return;
                       setAdminSearchQuery("");
                       setActiveTab("shows");
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-colors"
+                    disabled={loading || bulkLoading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-white/10 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -2141,12 +2268,16 @@ const AdminDashboard = () => {
                   {["shows", "seasons", "episodes", "movies"].map((filter) => (
                     <button
                       key={filter}
-                      onClick={() => toggleSearchFilter(filter)}
+                      onClick={() => {
+                        if (loading || bulkLoading) return;
+                        toggleSearchFilter(filter);
+                      }}
+                      disabled={loading || bulkLoading}
                       className={`px-3 py-1.5 rounded text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${
                         adminSearchFilters.includes(filter)
                           ? "bg-[#e50914] text-white"
                           : "text-gray-500 hover:text-gray-300 hover:bg-gray-800"
-                      }`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {filter}
                     </button>
@@ -2155,8 +2286,12 @@ const AdminDashboard = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setAdminSearchFilters(["shows", "seasons", "episodes", "movies"])}
+                  onClick={() => {
+                    if (loading || bulkLoading) return;
+                    setAdminSearchFilters(["shows", "seasons", "episodes", "movies"]);
+                  }}
                   className="text-xs text-gray-400 hover:text-black h-9"
+                  disabled={loading || bulkLoading}
                 >
                   Clear Filters
                 </Button>
@@ -2170,24 +2305,28 @@ const AdminDashboard = () => {
               <TabsTrigger 
                 value="shows" 
                 className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+                disabled={loading || bulkLoading}
               >
                 Shows
               </TabsTrigger>
               <TabsTrigger 
                 value="seasons" 
                 className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+                disabled={loading || bulkLoading}
               >
                 Seasons
               </TabsTrigger>
               <TabsTrigger 
                 value="episodes" 
                 className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+                disabled={loading || bulkLoading}
               >
                 Episodes
               </TabsTrigger>
               <TabsTrigger 
                 value="movies" 
                 className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4"
+                disabled={loading || bulkLoading}
               >
                 Movies
               </TabsTrigger>
@@ -2195,6 +2334,7 @@ const AdminDashboard = () => {
                 <TabsTrigger 
                   value="search" 
                   className="hover:bg-[#3d3d3d] flex-1 sm:flex-none text-sm sm:text-base px-3 sm:px-4 flex items-center gap-2 text-[#e50914] font-bold"
+                  disabled={loading || bulkLoading}
                 >
                   <Search className="h-4 w-4" />
                   Results ({totalSearchCount})
@@ -2239,8 +2379,8 @@ const AdminDashboard = () => {
                             <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-1 break-words">{show.name}</h3>
                             {show.description && <p className="text-xs sm:text-sm text-gray-400 mb-3 line-clamp-2 break-words">{show.description}</p>}
                             <div className="flex gap-2">
-                              <Button onClick={() => handleEditShow(show)} variant="outline" size="sm" className="flex-1 text-xs">Edit</Button>
-                              <Button onClick={() => handleDeleteShow(show.id)} variant="destructive" size="sm" className="flex-1 text-xs">Delete</Button>
+                              <Button onClick={() => handleEditShow(show)} variant="outline" size="sm" className="flex-1 text-xs" disabled={loading || bulkLoading}>Edit</Button>
+                              <Button onClick={() => handleDeleteShow(show.id)} variant="destructive" size="sm" className="flex-1 text-xs" disabled={loading || bulkLoading}>Delete</Button>
                             </div>
                           </div>
                         );
@@ -2254,18 +2394,19 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                        <div className="flex items-center gap-3">
-                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Seasons ({filteredSeasons.length})</h2>
-                         {selectedSeasons.filter(id => filteredSeasons.some(fs => fs.id === id)).length > 0 && (
+                          <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Seasons ({filteredSeasons.length})</h2>
+                          {selectedSeasons.filter(id => filteredSeasons.some(fs => fs.id === id)).length > 0 && (
                             <Button
                               onClick={() => handleBulkDelete("seasons")}
                               variant="destructive"
                               size="sm"
                               className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                              disabled={loading || bulkLoading}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Selected ({selectedSeasons.filter(id => filteredSeasons.some(fs => fs.id === id)).length})
                             </Button>
-                         )}
+                          )}
                        </div>
                     </div>
                     <div className="space-y-4">
@@ -2285,20 +2426,22 @@ const AdminDashboard = () => {
                                         className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedSeasons.includes(season.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                         checked={selectedSeasons.includes(season.id)}
                                         onChange={() => {
+                                          if (loading || bulkLoading) return;
                                           if (selectedSeasons.includes(season.id)) {
                                             setSelectedSeasons(selectedSeasons.filter(id => id !== season.id));
                                           } else {
                                             setSelectedSeasons([...selectedSeasons, season.id]);
                                           }
                                         }}
+                                        disabled={loading || bulkLoading}
                                       />
                                       <span className="text-sm sm:text-base truncate">
                                         Season {season.season_number} {season.name && `- ${season.name}`}
                                       </span>
                                     </div>
                                     <div className="flex gap-2 flex-shrink-0 justify-end">
-                                      <Button onClick={() => handleEditSeason(season)} size="sm" variant="outline" className="h-8 px-3"><Edit className="h-3.5 w-3.5" /></Button>
-                                      <Button onClick={() => handleDeleteSeason(season.id)} size="sm" variant="destructive" className="h-8 px-3"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                      <Button onClick={() => handleEditSeason(season)} size="sm" variant="outline" className="h-8 px-3" disabled={loading || bulkLoading}><Edit className="h-3.5 w-3.5" /></Button>
+                                      <Button onClick={() => handleDeleteSeason(season.id)} size="sm" variant="destructive" className="h-8 px-3" disabled={loading || bulkLoading}><Trash2 className="h-3.5 w-3.5" /></Button>
                                     </div>
                                   </div>
                                 ))}
@@ -2315,18 +2458,19 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                        <div className="flex items-center gap-3">
-                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Episodes ({filteredEpisodes.length})</h2>
-                         {selectedEpisodes.filter(id => filteredEpisodes.some(fe => fe.id === id)).length > 0 && (
+                          <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Episodes ({filteredEpisodes.length})</h2>
+                          {selectedEpisodes.filter(id => filteredEpisodes.some(fe => fe.id === id)).length > 0 && (
                             <Button
                               onClick={() => handleBulkDelete("episodes")}
                               variant="destructive"
                               size="sm"
                               className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                              disabled={loading || bulkLoading}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Selected ({selectedEpisodes.filter(id => filteredEpisodes.some(fe => fe.id === id)).length})
                             </Button>
-                         )}
+                          )}
                        </div>
                     </div>
                     <div className="grid grid-cols-1 gap-6">
@@ -2355,12 +2499,14 @@ const AdminDashboard = () => {
                                       className="h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0"
                                       checked={isAllSelected}
                                       onChange={() => {
+                                        if (loading || bulkLoading) return;
                                         if (isAllSelected) {
                                           setSelectedEpisodes(selectedEpisodes.filter(id => !groupEpisodeIds.includes(id)));
                                         } else {
                                           setSelectedEpisodes([...new Set([...selectedEpisodes, ...groupEpisodeIds])]);
                                         }
                                       }}
+                                      disabled={loading || bulkLoading}
                                     />
                                     <h3 className="text-sm sm:text-base font-bold truncate line-clamp-1 break-words">
                                       {show.name} - Season {season.season_number} {season.name && ` - ${truncateText(season.name)}`}
@@ -2372,12 +2518,14 @@ const AdminDashboard = () => {
                                     size="sm" 
                                     className="h-7 text-[13px] text-gray-400 hover:text-black"
                                     onClick={() => {
+                                      if (loading || bulkLoading) return;
                                       if (isAllSelected) {
                                         setSelectedEpisodes(selectedEpisodes.filter(id => !groupEpisodeIds.includes(id)));
                                       } else {
                                         setSelectedEpisodes([...new Set([...selectedEpisodes, ...groupEpisodeIds])]);
                                       }
                                     }}
+                                    disabled={loading || bulkLoading}
                                   >
                                     {isAllSelected ? "Deselect All" : "Select All"}
                                   </Button>
@@ -2393,12 +2541,14 @@ const AdminDashboard = () => {
                                               className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedEpisodes.includes(episode.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                               checked={selectedEpisodes.includes(episode.id)}
                                               onChange={() => {
+                                                if (loading || bulkLoading) return;
                                                 if (selectedEpisodes.includes(episode.id)) {
                                                   setSelectedEpisodes(selectedEpisodes.filter(id => id !== episode.id));
                                                 } else {
                                                   setSelectedEpisodes([...selectedEpisodes, episode.id]);
                                                 }
                                               }}
+                                              disabled={loading || bulkLoading}
                                             />
                                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest leading-none">Episode {episode.episode_number}</span>
                                           </div>
@@ -2407,8 +2557,8 @@ const AdminDashboard = () => {
                                           <p className="text-[10px] text-gray-500 truncate">URL: {truncateText(episode.video_url, 20)}</p>
                                         </div>
                                         <div className="flex gap-2 flex-shrink-0">
-                                          <Button onClick={() => handleEditEpisode(episode)} size="sm" variant="outline" className="h-8"><Edit className="h-3.5 w-3.5" /></Button>
-                                          <Button onClick={() => handleDeleteEpisode(episode.id)} size="sm" variant="destructive" className="h-8"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                          <Button onClick={() => handleEditEpisode(episode)} size="sm" variant="outline" className="h-8" disabled={loading || bulkLoading}><Edit className="h-3.5 w-3.5" /></Button>
+                                          <Button onClick={() => handleDeleteEpisode(episode.id)} size="sm" variant="destructive" className="h-8" disabled={loading || bulkLoading}><Trash2 className="h-3.5 w-3.5" /></Button>
                                         </div>
                                       </div>
                                     </div>
@@ -2427,18 +2577,19 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                        <div className="flex items-center gap-3">
-                         <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Movies ({filteredMovies.length})</h2>
-                         {selectedMovies.filter(id => filteredMovies.some(fm => fm.id === id)).length > 0 && (
+                          <h2 className="text-lg sm:text-xl font-bold text-[#e50914]">Matched Movies ({filteredMovies.length})</h2>
+                          {selectedMovies.filter(id => filteredMovies.some(fm => fm.id === id)).length > 0 && (
                             <Button
                               onClick={() => handleBulkDelete("movies")}
                               variant="destructive"
                               size="sm"
                               className="bg-red-600 hover:bg-red-700 h-8 text-[10px] sm:text-xs px-3"
+                              disabled={loading || bulkLoading}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Delete Selected ({selectedMovies.filter(id => filteredMovies.some(fm => fm.id === id)).length})
                             </Button>
-                         )}
+                          )}
                        </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -2452,12 +2603,14 @@ const AdminDashboard = () => {
                                 className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedMovies.includes(movie.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                 checked={selectedMovies.includes(movie.id)}
                                 onChange={() => {
+                                  if (loading || bulkLoading) return;
                                   if (selectedMovies.includes(movie.id)) {
                                     setSelectedMovies(selectedMovies.filter(id => id !== movie.id));
                                   } else {
                                     setSelectedMovies([...selectedMovies, movie.id]);
                                   }
                                 }}
+                                disabled={loading || bulkLoading}
                               />
                               <h3 className="text-base font-semibold truncate flex-1 break-words">{movie.title}</h3>
                             </div>
@@ -2469,8 +2622,8 @@ const AdminDashboard = () => {
                                </div>
                             )}
                             <div className="flex gap-2">
-                              <Button onClick={() => handleEditMovie(movie)} size="sm" variant="outline" className="flex-1 text-xs">Edit</Button>
-                              <Button onClick={() => handleDeleteMovie(movie.id)} size="sm" variant="destructive" className="flex-1 text-xs">Delete</Button>
+                              <Button onClick={() => handleEditMovie(movie)} size="sm" variant="outline" className="flex-1 text-xs" disabled={loading || bulkLoading}>Edit</Button>
+                              <Button onClick={() => handleDeleteMovie(movie.id)} size="sm" variant="destructive" className="flex-1 text-xs" disabled={loading || bulkLoading}>Delete</Button>
                             </div>
                           </div>
                         );
@@ -2493,6 +2646,7 @@ const AdminDashboard = () => {
                       variant="outline"
                       size="sm"
                       className="text-gray-400 hover:text-black h-8 sm:h-9"
+                      disabled={loading || bulkLoading}
                     >
                       <FileText className="mr-2 h-4 w-4" />
                       View Report
@@ -2504,6 +2658,7 @@ const AdminDashboard = () => {
                     data-testid="add-show-btn"
                     onClick={() => setShowDialog(true)}
                     className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                    disabled={loading || bulkLoading}
                   >
                     <Plus className="mr-2 h-4 w-4" /> Add Show
                   </Button>
@@ -2511,6 +2666,7 @@ const AdminDashboard = () => {
                     onClick={() => handleOpenBulkDialog("shows")}
                     variant="ghost"
                     className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                    disabled={loading || bulkLoading}
                   >
                     Bulk Upload
                   </Button>
@@ -2573,6 +2729,7 @@ const AdminDashboard = () => {
                             variant="outline"
                             size="sm"
                             className="flex-1 text-xs sm:text-sm"
+                            disabled={loading || bulkLoading}
                           >
                             <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Edit
                           </Button>
@@ -2582,6 +2739,7 @@ const AdminDashboard = () => {
                             variant="destructive"
                             size="sm"
                             className="flex-1 text-xs sm:text-sm"
+                            disabled={loading || bulkLoading}
                           >
                             <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Delete
                           </Button>
@@ -2597,20 +2755,22 @@ const AdminDashboard = () => {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentShowPage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentShowPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentShowPage === 1 || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                     {renderPaginationItems(currentShowPage, Math.ceil(shows.length / ITEMS_PER_PAGE), setCurrentShowPage)}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentShowPage(prev => Math.min(Math.ceil(shows.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentShowPage === Math.ceil(shows.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentShowPage === Math.ceil(shows.length / ITEMS_PER_PAGE) || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                   </PaginationContent>
@@ -2642,6 +2802,7 @@ const AdminDashboard = () => {
                           variant="outline"
                           size="sm"
                           className="text-gray-400 hover:text-black h-8 sm:h-9"
+                          disabled={loading || bulkLoading}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           View Report
@@ -2653,6 +2814,7 @@ const AdminDashboard = () => {
                           variant="destructive"
                           size="sm"
                           className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                          disabled={loading || bulkLoading}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete Selected ({selectedSeasons.length})
@@ -2664,6 +2826,7 @@ const AdminDashboard = () => {
                         data-testid="add-season-btn"
                         onClick={() => setSeasonDialog(true)}
                         className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                        disabled={loading || bulkLoading}
                       >
                         <Plus className="mr-2 h-4 w-4" /> Add Season
                       </Button>
@@ -2671,6 +2834,7 @@ const AdminDashboard = () => {
                         onClick={() => handleOpenBulkDialog("seasons")}
                         variant="ghost"
                         className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                        disabled={loading || bulkLoading}
                       >
                         Bulk Upload
                       </Button>
@@ -2708,12 +2872,14 @@ const AdminDashboard = () => {
                                             className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedSeasons.includes(season.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                             checked={selectedSeasons.includes(season.id)}
                                             onChange={() => {
+                                              if (loading || bulkLoading) return;
                                               if (selectedSeasons.includes(season.id)) {
                                                 setSelectedSeasons(selectedSeasons.filter(id => id !== season.id));
                                               } else {
                                                 setSelectedSeasons([...selectedSeasons, season.id]);
                                               }
                                             }}
+                                            disabled={loading || bulkLoading}
                                           />
                                           <span className="text-sm sm:text-base truncate flex-1" title={`Season ${season.season_number}${season.name ? ` - ${season.name}` : ''}`}>
                                             Season {season.season_number}
@@ -2727,6 +2893,7 @@ const AdminDashboard = () => {
                                           variant="outline"
                                           size="sm"
                                           className="h-8 sm:h-9"
+                                          disabled={loading || bulkLoading}
                                         >
                                           <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                         </Button>
@@ -2736,6 +2903,7 @@ const AdminDashboard = () => {
                                           variant="destructive"
                                           size="sm"
                                           className="h-8 sm:h-9"
+                                          disabled={loading || bulkLoading}
                                         >
                                           <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                         </Button>
@@ -2755,20 +2923,22 @@ const AdminDashboard = () => {
                           <PaginationItem>
                             <PaginationPrevious
                               onClick={() => {
+                                if (loading || bulkLoading) return;
                                 setCurrentSeasonPage(prev => Math.max(1, prev - 1));
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
-                              className={currentSeasonPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                              className={currentSeasonPage === 1 || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                             />
                           </PaginationItem>
                           {renderPaginationItems(currentSeasonPage, totalSeasonPages, setCurrentSeasonPage)}
                           <PaginationItem>
                             <PaginationNext
                               onClick={() => {
+                                if (loading || bulkLoading) return;
                                 setCurrentSeasonPage(prev => Math.min(totalSeasonPages, prev + 1));
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                               }}
-                              className={currentSeasonPage === totalSeasonPages ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                              className={currentSeasonPage === totalSeasonPages || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                             />
                           </PaginationItem>
                         </PaginationContent>
@@ -2791,6 +2961,7 @@ const AdminDashboard = () => {
                     variant="outline"
                     size="sm"
                     className="text-gray-400 hover:text-black h-8 sm:h-9"
+                    disabled={loading || bulkLoading}
                   >
                     <FileText className="mr-2 h-4 w-4" />
                     View Report
@@ -2802,6 +2973,7 @@ const AdminDashboard = () => {
                     variant="destructive"
                     size="sm"
                     className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                    disabled={loading || bulkLoading}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Selected ({selectedEpisodes.length})
@@ -2812,6 +2984,7 @@ const AdminDashboard = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
+                      if (loading || bulkLoading) return;
                       const pageItems = episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).map(e => e.id);
                       const allSelected = pageItems.every(id => selectedEpisodes.includes(id));
                       if (allSelected) {
@@ -2821,6 +2994,7 @@ const AdminDashboard = () => {
                       }
                     }}
                     className="text-xs text-gray-400 hover:text-black text-[13px]"
+                    disabled={loading || bulkLoading}
                   >
                     {episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).length > 0 && episodes.slice((currentEpisodePage - 1) * ITEMS_PER_PAGE, currentEpisodePage * ITEMS_PER_PAGE).every(e => selectedEpisodes.includes(e.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
@@ -2831,6 +3005,7 @@ const AdminDashboard = () => {
                   data-testid="add-episode-btn"
                   onClick={() => setEpisodeDialog(true)}
                   className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                  disabled={loading || bulkLoading}
                 >
                   <Plus className="mr-2 h-4 w-4" /> Add Episode
                 </Button>
@@ -2838,6 +3013,7 @@ const AdminDashboard = () => {
                   onClick={() => handleOpenBulkDialog("episodes")}
                   variant="ghost"
                   className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                  disabled={loading || bulkLoading}
                 >
                   Bulk Upload
                 </Button>
@@ -2864,12 +3040,14 @@ const AdminDashboard = () => {
                                 className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedEpisodes.includes(episode.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                 checked={selectedEpisodes.includes(episode.id)}
                                 onChange={() => {
+                                  if (loading || bulkLoading) return;
                                   if (selectedEpisodes.includes(episode.id)) {
                                     setSelectedEpisodes(selectedEpisodes.filter(id => id !== episode.id));
                                   } else {
                                     setSelectedEpisodes([...selectedEpisodes, episode.id]);
                                   }
                                 }}
+                                disabled={loading || bulkLoading}
                               />
                               <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={`${show?.name} - Season ${season?.season_number}`}>
                                 {show?.name} - Season {season?.season_number} {season?.name && ` - ${truncateText(season?.name)}`}
@@ -2894,6 +3072,7 @@ const AdminDashboard = () => {
                               variant="outline"
                               size="sm"
                               className="h-8 sm:h-9"
+                              disabled={loading || bulkLoading}
                             >
                               <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
@@ -2903,6 +3082,7 @@ const AdminDashboard = () => {
                               variant="destructive"
                               size="sm"
                               className="h-8 sm:h-9"
+                              disabled={loading || bulkLoading}
                             >
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
@@ -2924,20 +3104,22 @@ const AdminDashboard = () => {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentEpisodePage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentEpisodePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentEpisodePage === 1 || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                     {renderPaginationItems(currentEpisodePage, Math.ceil(episodes.length / ITEMS_PER_PAGE), setCurrentEpisodePage)}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentEpisodePage(prev => Math.min(Math.ceil(episodes.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentEpisodePage === Math.ceil(episodes.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentEpisodePage === Math.ceil(episodes.length / ITEMS_PER_PAGE) || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                   </PaginationContent>
@@ -2957,6 +3139,7 @@ const AdminDashboard = () => {
                     variant="outline"
                     size="sm"
                     className="text-gray-400 hover:text-black h-8 sm:h-9"
+                    disabled={loading || bulkLoading}
                   >
                     <FileText className="mr-2 h-4 w-4" />
                     View Report
@@ -2968,6 +3151,7 @@ const AdminDashboard = () => {
                     variant="destructive"
                     size="sm"
                     className="bg-red-600 hover:bg-red-700 h-8 sm:h-9"
+                    disabled={loading || bulkLoading}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Selected ({selectedMovies.length})
@@ -2978,6 +3162,7 @@ const AdminDashboard = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => {
+                      if (loading || bulkLoading) return;
                       const pageItems = movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).map(m => m.id);
                       const allSelected = pageItems.every(id => selectedMovies.includes(id));
                       if (allSelected) {
@@ -2987,6 +3172,7 @@ const AdminDashboard = () => {
                       }
                     }}
                     className="text-xs text-gray-400 hover:text-black text-[13px]"
+                    disabled={loading || bulkLoading}
                   >
                     {movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).length > 0 && movies.slice((currentMoviePage - 1) * ITEMS_PER_PAGE, currentMoviePage * ITEMS_PER_PAGE).every(m => selectedMovies.includes(m.id)) ? "Deselect Page" : "Select Page"}
                   </Button>
@@ -2997,6 +3183,7 @@ const AdminDashboard = () => {
                   data-testid="add-movie-btn"
                   onClick={() => setMovieDialog(true)}
                   className="bg-[#e50914] hover:bg-[#b00710] h-9 px-4 rounded-md text-sm font-semibold transition-all active:scale-95 flex-1 sm:flex-none"
+                  disabled={loading || bulkLoading}
                 >
                   <Plus className="mr-2 h-4 w-4" /> Add Movie
                 </Button>
@@ -3004,6 +3191,7 @@ const AdminDashboard = () => {
                   onClick={() => handleOpenBulkDialog("movies")}
                   variant="ghost"
                   className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none"
+                  disabled={loading || bulkLoading}
                 >
                   Bulk Upload
                 </Button>
@@ -3029,12 +3217,14 @@ const AdminDashboard = () => {
                                 className={`h-4 w-4 rounded border-gray-700 bg-black text-[#e50914] focus:ring-[#e50914] cursor-pointer shrink-0 transition-opacity ${selectedMovies.includes(movie.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                                 checked={selectedMovies.includes(movie.id)}
                                 onChange={() => {
+                                  if (loading || bulkLoading) return;
                                   if (selectedMovies.includes(movie.id)) {
                                     setSelectedMovies(selectedMovies.filter(id => id !== movie.id));
                                   } else {
                                     setSelectedMovies([...selectedMovies, movie.id]);
                                   }
                                 }}
+                                disabled={loading || bulkLoading}
                               />
                               <p className="text-xs sm:text-sm text-gray-400 truncate flex-1" title={show?.name}>
                                 {show?.name || "Single Movie"}
@@ -3059,6 +3249,7 @@ const AdminDashboard = () => {
                               variant="outline"
                               size="sm"
                               className="h-8 sm:h-9"
+                              disabled={loading || bulkLoading}
                             >
                               <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
@@ -3068,6 +3259,7 @@ const AdminDashboard = () => {
                               variant="destructive"
                               size="sm"
                               className="h-8 sm:h-9"
+                              disabled={loading || bulkLoading}
                             >
                               <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
@@ -3089,20 +3281,22 @@ const AdminDashboard = () => {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentMoviePage(prev => Math.max(1, prev - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentMoviePage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentMoviePage === 1 || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                     {renderPaginationItems(currentMoviePage, Math.ceil(movies.length / ITEMS_PER_PAGE), setCurrentMoviePage)}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => {
+                          if (loading || bulkLoading) return;
                           setCurrentMoviePage(prev => Math.min(Math.ceil(movies.length / ITEMS_PER_PAGE), prev + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={currentMoviePage === Math.ceil(movies.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
+                        className={currentMoviePage === Math.ceil(movies.length / ITEMS_PER_PAGE) || loading || bulkLoading ? "pointer-events-none opacity-50" : "cursor-pointer hover:bg-[#e50914] transition-colors"}
                       />
                     </PaginationItem>
                   </PaginationContent>
