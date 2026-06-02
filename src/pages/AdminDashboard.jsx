@@ -325,7 +325,6 @@ const AdminDashboard = () => {
       toast.success("Show deleted successfully");
       fetchAllData();
     } catch (error) {
-      console.error("Delete request failed:", error);
       toast.error("Failed to delete show");
     } finally {
       setLoading(false);
@@ -823,7 +822,6 @@ const AdminDashboard = () => {
         await axiosInstance.delete(`/${type}/${id}`);
         success++;
       } catch (err) {
-        console.error(`Failed to delete ${type} with id ${id}:`, err);
         fail++;
       }
     }
