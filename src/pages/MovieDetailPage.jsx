@@ -54,11 +54,11 @@ const MovieDetailPage = () => {
     fetchMovie();
   }, [movieId]);
 
-  const handleWatch = (id) => {
+  const handleWatch = (movieObj) => {
     const userSession = getUserSession();
     // In a real app, you might check for subscription or age rating here.
     // For now, we'll just navigate.
-    navigate(`/watch/${id}?type=movie`);
+    navigate(`/watch/movie/${slugify(movieObj.title)}`);
   };
 
   if (loading) {
@@ -138,7 +138,7 @@ const MovieDetailPage = () => {
             {/* Action Buttons */}
             <div className="flex pt-4 sm:pt-6 w-full sm:w-max mt-2">
               <Button
-                onClick={() => handleWatch(movie.id)}
+                onClick={() => handleWatch(movie)}
                 className="w-full sm:w-auto h-12 sm:h-14 bg-[#e50914] hover:bg-[#f40612] text-sm sm:text-base md:text-lg font-bold px-6 sm:px-8 rounded-md transition-all duration-300 flex justify-center items-center gap-2 shadow-lg hover:shadow-[#e50914]/30 hover:scale-105 active:scale-95 whitespace-nowrap"
               >
                 <Play className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 fill-current shrink-0" />

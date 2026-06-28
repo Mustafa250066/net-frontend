@@ -25,6 +25,7 @@ import {
 import convertToDirectUrl from "@/lib/convert";
 import getShortAlt from "@/lib/fallback";
 import formatDuration from "@/lib/formatDuration";
+import { slugify } from "@/lib/utils";
 
 const ShowDetailPage = () => {
   const { showId } = useParams();
@@ -81,17 +82,22 @@ const ShowDetailPage = () => {
     }
   };
 
-  const getFirstEpisodeId = () => {
+  const getFirstEpisodeSlugInfo = () => {
     if (seasons.length > 0 && episodes[seasons[0].id]?.length > 0) {
-      return episodes[seasons[0].id][0].id;
+      const firstSeason = seasons[0];
+      const firstEpisode = episodes[firstSeason.id][0];
+      return {
+        showSlug: slugify(show.name),
+        seasonEpisode: `${firstSeason.season_number}x${firstEpisode.episode_number}`
+      };
     }
     return null;
   };
 
   const handleWatchShow = () => {
-    const firstEpId = getFirstEpisodeId();
-    if (firstEpId) {
-      navigate(`/watch/${firstEpId}`);
+    const firstEpInfo = getFirstEpisodeSlugInfo();
+    if (firstEpInfo) {
+      navigate(`/watch/show/${firstEpInfo.showSlug}/${firstEpInfo.seasonEpisode}`);
     } else {
       toast.info("No episodes available to play yet.");
     }
@@ -222,54 +228,58 @@ const ShowDetailPage = () => {
 
                 return (
                   <>
-                    {paginatedEpisodes.map((episode) => (
-                      <div
-                        key={episode.id}
-                        onClick={() => navigate(`/watch/${episode.id}`)}
-                        className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 border-b border-gray-800 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group w-full min-w-0 overflow-hidden"
-                      >
-                        {/* Thumbnail */}
-                        <div className="relative w-full sm:w-40 md:w-48 aspect-video rounded-md overflow-hidden shrink-0 bg-gray-900">
-                          {episode.thumbnail_url ? (
-                            <img
-                              src={convertToDirectUrl(episode.thumbnail_url)}
-                              alt={`Episode ${episode.episode_number}`}
-                              className="w-full h-full object-cover group-hover:opacity-70 transition-opacity"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                              <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
-                            </div>
-                          )}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="bg-black/50 p-2 rounded-full border border-white">
-                              <Play className="w-6 h-6 text-white fill-white shrink-0" />
+                    {paginatedEpisodes.map((episode) => {
+                      const currentSeasonObj = seasons.find(s => s.id === activeSeason);
+                      const seasonNum = currentSeasonObj ? currentSeasonObj.season_number : 1;
+                      return (
+                        <div
+                          key={episode.id}
+                          onClick={() => navigate(`/watch/show/${slugify(show.name)}/${seasonNum}x${episode.episode_number}`)}
+                          className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 border-b border-gray-800 hover:bg-[#1a1a1a] rounded-lg cursor-pointer transition-colors group w-full min-w-0 overflow-hidden"
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative w-full sm:w-40 md:w-48 aspect-video rounded-md overflow-hidden shrink-0 bg-gray-900">
+                            {episode.thumbnail_url ? (
+                              <img
+                                src={convertToDirectUrl(episode.thumbnail_url)}
+                                alt={`Episode ${episode.episode_number}`}
+                                className="w-full h-full object-cover group-hover:opacity-70 transition-opacity"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                                <Play className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-[#e50914]" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="bg-black/50 p-2 rounded-full border border-white">
+                                <Play className="w-6 h-6 text-white fill-white shrink-0" />
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Info (Title, Desc) */}
-                        <div className="flex-1 min-w-0 w-full overflow-hidden">
-                          <div className="flex justify-between items-start gap-2 mb-1 w-full min-w-0">
-                            <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 break-all sm:break-words flex-1 min-w-0">
-                              {episode.title
-                                ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
-                                : `Episode ${episode.episode_number}`}
-                            </h3>
-                            {episode.duration && (
-                              <span className="text-gray-400 text-sm font-medium shrink-0 mt-1 sm:mt-0 whitespace-nowrap">
-                                {Math.floor(episode.duration)}m
-                              </span>
+                          {/* Info (Title, Desc) */}
+                          <div className="flex-1 min-w-0 w-full overflow-hidden">
+                            <div className="flex justify-between items-start gap-2 mb-1 w-full min-w-0">
+                              <h3 className="text-base sm:text-lg font-bold text-white line-clamp-2 break-all sm:break-words flex-1 min-w-0">
+                                {episode.title
+                                  ? `Episode ${episode.episode_number} - ${episode.title.length > 40 ? episode.title.slice(0, 40) + "..." : episode.title}`
+                                  : `Episode ${episode.episode_number}`}
+                              </h3>
+                              {episode.duration && (
+                                <span className="text-gray-400 text-sm font-medium shrink-0 mt-1 sm:mt-0 whitespace-nowrap">
+                                  {Math.floor(episode.duration)}m
+                                </span>
+                              )}
+                            </div>
+                            {episode.description && (
+                              <p className="text-gray-400 text-sm sm:text-base line-clamp-3 sm:line-clamp-2 break-all sm:break-words leading-relaxed w-full">
+                                {episode.description}
+                              </p>
                             )}
                           </div>
-                          {episode.description && (
-                            <p className="text-gray-400 text-sm sm:text-base line-clamp-3 sm:line-clamp-2 break-all sm:break-words leading-relaxed w-full">
-                              {episode.description}
-                            </p>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Pagination Controls */}
                     {totalPages > 1 && (

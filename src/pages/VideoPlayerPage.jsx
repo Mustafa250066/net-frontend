@@ -11,7 +11,7 @@ import formatDuration from "@/lib/formatDuration";
 import { slugify } from "@/lib/utils";
 
 const VideoPlayerPage = () => {
-  const { episodeId } = useParams();
+  const { showSlug, seasonEpisode, movieSlug } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -24,8 +24,7 @@ const VideoPlayerPage = () => {
   const progressInterval = useRef(null);
 
   // detect type
-  const searchParams = new URLSearchParams(location.search);
-  const type = searchParams.get("type"); // "movie" or null
+  const type = movieSlug ? "movie" : "show";
 
   useEffect(() => {
     setLoading(true);
@@ -34,13 +33,95 @@ const VideoPlayerPage = () => {
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current);
     };
-  }, [episodeId]);
+  }, [showSlug, seasonEpisode, movieSlug]);
+
+  
+
+  // --- KEYBOARD SHORTCUTS ---
+
+  useEffect(() => {
+
+    const handleKeyDown = (e) => {
+
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+
+
+      const currentIndex = seasonEpisodes.findIndex(ep => ep.id.toString() === episode?.id?.toString());
+
+
+
+      if (e.shiftKey && e.key.toLowerCase() === 'n') {
+
+        e.preventDefault();
+
+        
+
+        if (type !== "movie" && currentIndex !== -1 && currentIndex < seasonEpisodes.length - 1) {
+
+          const nextEp = seasonEpisodes[currentIndex + 1];
+
+          navigate(`/watch/${getEpisodeSlug(nextEp)}`);
+
+          window.scrollTo(0, 0);
+
+          toast.success("Skipping to next episode");
+
+        } else {
+
+          toast.info("No next episode available");
+
+        }
+
+      }
+
+
+
+      if (e.ctrlKey && e.key.toLowerCase() === 'p') {
+
+        e.preventDefault();
+
+        
+
+        if (type !== "movie" && currentIndex > 0) {
+
+          const prevEp = seasonEpisodes[currentIndex - 1];
+
+          navigate(`/watch/${getEpisodeSlug(prevEp)}`);
+
+          window.scrollTo(0, 0);
+
+          toast.success("Going to previous episode");
+
+        }
+
+      }
+
+    };
+
+
+
+    document.addEventListener("keydown", handleKeyDown);
+
+
+
+    return () => {
+
+      document.removeEventListener("keydown", handleKeyDown);
+
+    };
+
+  }, [seasonEpisodes, episodeId, episode, showData, navigate, type]); 
+
+  // IMPORTANT: These dependencies ensure your shortcuts always have the latest episode data.
+
+  // -------------------------
 
   const fetchDetails = async () => {
     try {
       if (type === "movie") {
         // ----- MOVIE MODE -----
-        const movieRes = await axios.get(`${API}/movies/${episodeId}`);
+        const movieRes = await axios.get(`${API}/movies/${movieSlug}`);
         const movie = movieRes.data;
 
         let fetchedShowName = null;
@@ -62,7 +143,8 @@ const VideoPlayerPage = () => {
         });
       } else {
         // ----- EPISODE MODE -----
-        const episodeRes = await axios.get(`${API}/episodes/${episodeId}`);
+        const epSlug = `${showSlug}-${seasonEpisode}`;
+        const episodeRes = await axios.get(`${API}/episodes/${epSlug}`);
         const ep = episodeRes.data;
         setEpisode(ep);
 
@@ -101,7 +183,7 @@ const VideoPlayerPage = () => {
         // Load saved progress
         const userSession = getUserSession();
         const progressRes = await axios.get(
-          `${API}/watch-progress/${userSession}/${episodeId}`,
+          `${API}/watch-progress/${userSession}/${ep.id}`,
         );
 
         if (progressRes.data.progress > 0 && videoRef.current) {
@@ -139,7 +221,7 @@ const VideoPlayerPage = () => {
       const userSession = getUserSession();
       await axios.post(`${API}/watch-progress`, {
         user_session: userSession,
-        episode_id: episodeId,
+        episode_id: episode.id,
         progress: currentTime,
       });
     } catch (error) {
@@ -175,7 +257,7 @@ const VideoPlayerPage = () => {
           onClick={() =>
             type === "movie"
               ? navigate(-1)
-              : navigate(`/show/${showData?.name ? slugify(showData.name) : episode.show_id}`)
+              : navigate(`/show/${showSlug}`)
           }
           variant="ghost"
           className="ml-2 sm:ml-6 px-4 bg-[#e50914] text-white hover:bg-[#e50914db] hover:text-white"
@@ -189,7 +271,7 @@ const VideoPlayerPage = () => {
       <div className="w-full bg-black flex justify-center items-center border-b border-gray-800 py-0 sm:py-4">
         <div className="w-full max-w-6xl h-[280px] sm:h-[400px] md:h-[500px] lg:h-[600px] relative">
           <VideoPlayer
-            key={episodeId}
+            key={episode?.id}
             ref={videoRef}
             url={episode.video_url}
             onPlay={handleVideoPlay}
@@ -273,13 +355,14 @@ const VideoPlayerPage = () => {
             {/* Previous Button Container */}
             <div className="flex-1 flex justify-start">
               {(() => {
-                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episodeId?.toString());
+                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episode?.id?.toString());
                 const prevEp = currentIndex > 0 ? seasonEpisodes[currentIndex - 1] : null;
                 if (prevEp) {
                   return (
                     <Button
                       onClick={() => {
-                        navigate(`/watch/${prevEp.id}`);
+                        const seasonNum = showData?.season_number || 1;
+                        navigate(`/watch/show/${showSlug}/${seasonNum}x${prevEp.episode_number}`);
                         window.scrollTo(0, 0);
                       }}
                       variant="ghost"
@@ -304,13 +387,14 @@ const VideoPlayerPage = () => {
             {/* Next Button Container */}
             <div className="flex-1 flex justify-end">
               {(() => {
-                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episodeId?.toString());
+                const currentIndex = seasonEpisodes.findIndex(e => e.id.toString() === episode?.id?.toString());
                 const nextEp = currentIndex !== -1 && currentIndex < seasonEpisodes.length - 1 ? seasonEpisodes[currentIndex + 1] : null;
                 if (nextEp) {
                   return (
                     <Button
                       onClick={() => {
-                        navigate(`/watch/${nextEp.id}`);
+                        const seasonNum = showData?.season_number || 1;
+                        navigate(`/watch/show/${showSlug}/${seasonNum}x${nextEp.episode_number}`);
                         window.scrollTo(0, 0);
                       }}
                       variant="ghost"

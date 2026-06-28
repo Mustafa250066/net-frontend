@@ -45,7 +45,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/show/:showId" element={<ShowDetailPage />} />
           <Route path="/movie/:movieId" element={<MovieDetailPage />} />
-          <Route path="/watch/:episodeId" element={<VideoPlayerPage />} />
+          <Route path="/watch/show/:showSlug/:seasonEpisode" element={<VideoPlayerPage />} />
+          <Route path="/watch/movie/:movieSlug" element={<VideoPlayerPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </BrowserRouter>
