@@ -8,7 +8,16 @@ import { toast } from "sonner";
 import VideoPlayer from "@/components/VideoPlayer";
 import NetflixSpinner from "@/components/NetflixSpinner";
 import formatDuration from "@/lib/formatDuration";
-import { slugify } from "@/lib/utils";
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+};
 
 const VideoPlayerPage = () => {
   const { showSlug, seasonEpisode, movieSlug } = useParams();
@@ -35,87 +44,46 @@ const VideoPlayerPage = () => {
     };
   }, [showSlug, seasonEpisode, movieSlug]);
 
-  
-
   // --- KEYBOARD SHORTCUTS ---
-
   useEffect(() => {
-
     const handleKeyDown = (e) => {
-
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-
-
 
       const currentIndex = seasonEpisodes.findIndex(ep => ep.id.toString() === episode?.id?.toString());
 
-
-
       if (e.shiftKey && e.key.toLowerCase() === 'n') {
-
         e.preventDefault();
-
         
-
         if (type !== "movie" && currentIndex !== -1 && currentIndex < seasonEpisodes.length - 1) {
-
           const nextEp = seasonEpisodes[currentIndex + 1];
-
-          navigate(`/watch/${getEpisodeSlug(nextEp)}`);
-
+          const seasonNum = showData?.season_number || 1;
+          navigate(`/watch/show/${showSlug}/${seasonNum}x${nextEp.episode_number}`);
           window.scrollTo(0, 0);
-
           toast.success("Skipping to next episode");
-
         } else {
-
           toast.info("No next episode available");
-
         }
-
       }
-
-
 
       if (e.ctrlKey && e.key.toLowerCase() === 'p') {
-
         e.preventDefault();
-
         
-
         if (type !== "movie" && currentIndex > 0) {
-
           const prevEp = seasonEpisodes[currentIndex - 1];
-
-          navigate(`/watch/${getEpisodeSlug(prevEp)}`);
-
+          const seasonNum = showData?.season_number || 1;
+          navigate(`/watch/show/${showSlug}/${seasonNum}x${prevEp.episode_number}`);
           window.scrollTo(0, 0);
-
           toast.success("Going to previous episode");
-
         }
-
       }
-
     };
-
-
 
     document.addEventListener("keydown", handleKeyDown);
 
-
-
     return () => {
-
       document.removeEventListener("keydown", handleKeyDown);
-
     };
-
-  }, [seasonEpisodes, episodeId, episode, showData, navigate, type]); 
-
-  // IMPORTANT: These dependencies ensure your shortcuts always have the latest episode data.
-
-  // -------------------------
+  }, [seasonEpisodes, showSlug, episode, showData, navigate, type]); 
 
   const fetchDetails = async () => {
     try {
@@ -126,7 +94,6 @@ const VideoPlayerPage = () => {
 
         let fetchedShowName = null;
 
-        // Exactly copying logic from MovieDetailPage
         if (movie.show_id) {
           try {
             const showRes = await axios.get(`${API}/shows/${movie.show_id}`);
@@ -143,51 +110,58 @@ const VideoPlayerPage = () => {
         });
       } else {
         // ----- EPISODE MODE -----
-        const epSlug = `${showSlug}-${seasonEpisode}`;
-        const episodeRes = await axios.get(`${API}/episodes/${epSlug}`);
-        const ep = episodeRes.data;
-        setEpisode(ep);
+        const match = seasonEpisode ? seasonEpisode.match(/^(\d+)x(\d+)$/) : null;
+        if (!match) {
+          throw new Error("Invalid seasonEpisode format");
+        }
+        const seasonNum = parseInt(match[1], 10);
+        const episodeNum = parseInt(match[2], 10);
+
+        // Fetch all shows to find the matching show slug
+        const showsRes = await axios.get(`${API}/shows`);
+        const targetShow = showsRes.data.find(s => slugify(s.name) === showSlug);
+        if (!targetShow) {
+          throw new Error("Show not found");
+        }
+
+        // Fetch seasons for that show
+        const seasonsRes = await axios.get(`${API}/seasons?show_id=${targetShow.id}`);
+        const targetSeason = seasonsRes.data.find(s => s.season_number === seasonNum);
+        if (!targetSeason) {
+          throw new Error("Season not found");
+        }
+
+        // Fetch episodes of that season
+        const episodesRes = await axios.get(`${API}/episodes?season_id=${targetSeason.id}`);
+        const targetEpisode = episodesRes.data.find(e => e.episode_number === episodeNum);
+        if (!targetEpisode) {
+          throw new Error("Episode not found");
+        }
+
+        setEpisode(targetEpisode);
 
         // Fetch Season Episodes for prev/next navigation
-        try {
-          const episodesRes = await axios.get(`${API}/episodes?season_id=${ep.season_id}`);
-          const sortedEps = episodesRes.data.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
-          setSeasonEpisodes(sortedEps);
-        } catch (err) {
-          console.error("Error loading season episodes:", err);
-        }
+        const sortedEps = episodesRes.data.sort((a, b) => (a.episode_number || 0) - (b.episode_number || 0));
+        setSeasonEpisodes(sortedEps);
 
-        // BUG FIX: Fetch Show and Seasons securely (Matching your app's structure)
-        try {
-          const showRes = await axios.get(`${API}/shows/${ep.show_id}`);
-          const seasonsRes = await axios.get(`${API}/seasons?show_id=${ep.show_id}`);
-
-          // Current season ko array mein se dhoondo
-          const currentSeason = seasonsRes.data.find(s => s.id === ep.season_id);
-
-          setShowData({
-            name: showRes.data.name,
-            season_number: currentSeason ? currentSeason.season_number : "",
-            isMovie: false,
-          });
-        } catch (err) {
-          console.error("Error loading show/season details:", err);
-          // Fallback incase of API error
-          setShowData({
-            name: "TV Series",
-            season_number: "",
-            isMovie: false,
-          });
-        }
+        setShowData({
+          name: targetShow.name,
+          season_number: targetSeason.season_number,
+          isMovie: false,
+        });
 
         // Load saved progress
         const userSession = getUserSession();
-        const progressRes = await axios.get(
-          `${API}/watch-progress/${userSession}/${ep.id}`,
-        );
+        try {
+          const progressRes = await axios.get(
+            `${API}/watch-progress/${userSession}/${targetEpisode.id}`,
+          );
 
-        if (progressRes.data.progress > 0 && videoRef.current) {
-          videoRef.current.currentTime = progressRes.data.progress;
+          if (progressRes.data.progress > 0 && videoRef.current) {
+            videoRef.current.currentTime = progressRes.data.progress;
+          }
+        } catch (err) {
+          console.error("Error loading watch progress:", err);
         }
       }
     } catch (error) {
@@ -199,7 +173,7 @@ const VideoPlayerPage = () => {
   };
 
   const handleVideoPlay = () => {
-    if (type === "movie") return; // movies don't save progress
+    if (type === "movie") return;
 
     progressInterval.current = setInterval(() => {
       if (videoRef.current && !videoRef.current.paused) {
@@ -221,7 +195,7 @@ const VideoPlayerPage = () => {
       const userSession = getUserSession();
       await axios.post(`${API}/watch-progress`, {
         user_session: userSession,
-        episode_id: episode.id,
+        episode_id: episode?.id,
         progress: currentTime,
       });
     } catch (error) {

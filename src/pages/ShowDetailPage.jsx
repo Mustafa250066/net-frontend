@@ -25,7 +25,17 @@ import {
 import convertToDirectUrl from "@/lib/convert";
 import getShortAlt from "@/lib/fallback";
 import formatDuration from "@/lib/formatDuration";
-import { slugify } from "@/lib/utils";
+
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
+};
 
 const ShowDetailPage = () => {
   const { showId } = useParams();
