@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2, Search, Info } from "lucide-react";
+import { Plus, Trash2, Edit, LogOut, Key, Home, Eye, EyeOff, Menu, X, ChevronLeft, ChevronRight, FileText, FileCheck2, Search, Info, Download } from "lucide-react";
 import { toast } from "sonner";
 import convertToDirectUrl from '../lib/convert';
 import {
@@ -1057,6 +1057,153 @@ const AdminDashboard = () => {
     setBulkType(type);
     setBulkDialog(true);
     setUploadProgress(0);
+  };
+
+  const handleExportShows = () => {
+    try {
+      const dataToExport = shows.map(show => ({
+        "Show ID": show.id,
+        "Name": show.name || "",
+        "Description": show.description || "",
+        "Poster URL": show.poster_url || ""
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Shows");
+      
+      // Auto-fit columns
+      const maxLens = {};
+      dataToExport.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key]);
+          maxLens[key] = Math.max(maxLens[key] || 10, val.length);
+        });
+      });
+      worksheet["!cols"] = Object.keys(maxLens).map(key => ({ wch: Math.min(50, maxLens[key] + 2) }));
+      
+      XLSX.writeFile(workbook, "shows_export.xlsx");
+      toast.success("Shows exported successfully!");
+    } catch (error) {
+      console.error("Failed to export shows:", error);
+      toast.error("Failed to export shows");
+    }
+  };
+
+  const handleExportSeasons = () => {
+    try {
+      const dataToExport = seasons.map(season => {
+        const showObj = shows.find(s => s.id === season.show_id);
+        return {
+          "Season ID": season.id,
+          "Show ID": season.show_id || "",
+          "Show Name": showObj ? showObj.name : "Unknown Show",
+          "Season Number": season.season_number,
+          "Name": season.name || "",
+          "Description": season.description || ""
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Seasons");
+
+      // Auto-fit columns
+      const maxLens = {};
+      dataToExport.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key]);
+          maxLens[key] = Math.max(maxLens[key] || 10, val.length);
+        });
+      });
+      worksheet["!cols"] = Object.keys(maxLens).map(key => ({ wch: Math.min(50, maxLens[key] + 2) }));
+
+      XLSX.writeFile(workbook, "seasons_export.xlsx");
+      toast.success("Seasons exported successfully!");
+    } catch (error) {
+      console.error("Failed to export seasons:", error);
+      toast.error("Failed to export seasons");
+    }
+  };
+
+  const handleExportEpisodes = () => {
+    try {
+      const dataToExport = episodes.map(episode => {
+        const showObj = shows.find(s => s.id === episode.show_id);
+        const seasonObj = seasons.find(s => s.id === episode.season_id);
+        return {
+          "Episode ID": episode.id,
+          "Show ID": episode.show_id || "",
+          "Show Name": showObj ? showObj.name : "Unknown Show",
+          "Season Number": seasonObj ? seasonObj.season_number : "Unknown Season",
+          "Episode Number": episode.episode_number,
+          "Title": episode.title || "",
+          "Description": episode.description || "",
+          "Video URL": episode.video_url || "",
+          "Thumbnail URL": episode.thumbnail_url || "",
+          "Duration (min)": episode.duration || ""
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Episodes");
+
+      // Auto-fit columns
+      const maxLens = {};
+      dataToExport.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key]);
+          maxLens[key] = Math.max(maxLens[key] || 10, val.length);
+        });
+      });
+      worksheet["!cols"] = Object.keys(maxLens).map(key => ({ wch: Math.min(50, maxLens[key] + 2) }));
+
+      XLSX.writeFile(workbook, "episodes_export.xlsx");
+      toast.success("Episodes exported successfully!");
+    } catch (error) {
+      console.error("Failed to export episodes:", error);
+      toast.error("Failed to export episodes");
+    }
+  };
+
+  const handleExportMovies = () => {
+    try {
+      const dataToExport = movies.map(movie => {
+        const showObj = shows.find(s => s.id === movie.show_id);
+        return {
+          "Movie ID": movie.id,
+          "Title": movie.title || "",
+          "Description": movie.description || "",
+          "Video URL": movie.video_url || "",
+          "Poster URL": movie.poster_url || "",
+          "Thumbnail URL": movie.thumbnail_url || "",
+          "Duration (min)": movie.duration || "",
+          "Collection (Show) ID": movie.show_id || "",
+          "Collection (Show) Name": showObj ? showObj.name : ""
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Movies");
+
+      // Auto-fit columns
+      const maxLens = {};
+      dataToExport.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const val = String(row[key]);
+          maxLens[key] = Math.max(maxLens[key] || 10, val.length);
+        });
+      });
+      worksheet["!cols"] = Object.keys(maxLens).map(key => ({ wch: Math.min(50, maxLens[key] + 2) }));
+
+      XLSX.writeFile(workbook, "movies_export.xlsx");
+      toast.success("Movies exported successfully!");
+    } catch (error) {
+      console.error("Failed to export movies:", error);
+      toast.error("Failed to export movies");
+    }
   };
 
   // Filter seasons by show
@@ -2668,6 +2815,14 @@ const AdminDashboard = () => {
                   >
                     Bulk Upload
                   </Button>
+                  <Button
+                    onClick={handleExportShows}
+                    variant="ghost"
+                    className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none flex items-center gap-2"
+                    disabled={loading || bulkLoading}
+                  >
+                    <Download className="h-4 w-4" /> Export
+                  </Button>
                 </div>
               </div>
 
@@ -2835,6 +2990,14 @@ const AdminDashboard = () => {
                         disabled={loading || bulkLoading}
                       >
                         Bulk Upload
+                      </Button>
+                      <Button
+                        onClick={handleExportSeasons}
+                        variant="ghost"
+                        className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none flex items-center gap-2"
+                        disabled={loading || bulkLoading}
+                      >
+                        <Download className="h-4 w-4" /> Export
                       </Button>
                     </div>
                   </div>
@@ -3015,6 +3178,14 @@ const AdminDashboard = () => {
                 >
                   Bulk Upload
                 </Button>
+                <Button
+                  onClick={handleExportEpisodes}
+                  variant="ghost"
+                  className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none flex items-center gap-2"
+                  disabled={loading || bulkLoading}
+                >
+                  <Download className="h-4 w-4" /> Export
+                </Button>
               </div>
             </div>
             {/* Episode mapping */}
@@ -3192,6 +3363,14 @@ const AdminDashboard = () => {
                   disabled={loading || bulkLoading}
                 >
                   Bulk Upload
+                </Button>
+                <Button
+                  onClick={handleExportMovies}
+                  variant="ghost"
+                  className="h-9 px-4 rounded-md text-sm font-medium hover:bg-white/10 hover:text-white transition-all active:scale-95 text-gray-300 flex-1 sm:flex-none flex items-center gap-2"
+                  disabled={loading || bulkLoading}
+                >
+                  <Download className="h-4 w-4" /> Export
                 </Button>
               </div>
             </div>
